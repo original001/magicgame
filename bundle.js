@@ -102,10 +102,6 @@
 
 	var _key2 = _interopRequireDefault(_key);
 
-	var _spell = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"./spell.js\""); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
-
-	var _spell2 = _interopRequireDefault(_spell);
-
 	var _fire = __webpack_require__(15);
 
 	var _fire2 = _interopRequireDefault(_fire);
@@ -116,7 +112,6 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var spell = new _spell2.default();
 	var key = new _key2.default();
 
 	var World = function () {
@@ -289,7 +284,7 @@
 	        // spell.onSpell(Spell.BOLT);
 	        var ball = new _fire2.default(this.player.pos.x + this.player.model.w, this.player.pos.y + 10, 5, 5, 'blue');
 	        ball.update = function (tick) {
-	          this.pos.x += tick * 1000;
+	          this.pos.x += tick * 100;
 	        };
 	        ball.collide = function (target) {
 	          target.dead();
@@ -319,7 +314,30 @@
 	        this.friendlyFire.push(_ball2);
 	      }
 
-	      if (key.isDown(key.FOUR)) {}
+	      if (key.isDown(_key2.default.FOUR)) {
+	        var _ball3 = new _fire2.default(this.player.pos.x + this.player.model.w, this.player.pos.y + 10, 5, 5, 'red');
+	        _ball3.update = function (tick) {
+	          this.pos.x += tick * 100;
+	        };
+	        _ball3.collide = function (target) {
+	          target.jump(400);
+	        };
+	        this.friendlyFire.push(_ball3);
+	      }
+
+	      if (key.isDown(_key2.default.FIVE)) {
+	        var _ball4 = new _fire2.default(this.player.pos.x + this.player.model.w, this.player.pos.y + 10, 20, 20, 'orange');
+	        _ball4.update = function (tick) {
+	          if (this.model.w == 0) return;
+	          this.pos.x += tick * 100;
+	          this.model.w -= 1;
+	          this.model.h -= 1;
+	        };
+	        _ball4.collide = function (target) {
+	          target.dead(400);
+	        };
+	        this.friendlyFire.push(_ball4);
+	      }
 	    }
 	  }, {
 	    key: 'attachEvents',
@@ -1605,6 +1623,7 @@
 	Key.TWO = 'Digit2';
 	Key.THREE = 'Digit3';
 	Key.FOUR = 'Digit4';
+	Key.FIVE = 'Digit5';
 	exports.default = Key;
 	;
 

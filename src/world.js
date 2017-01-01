@@ -4,10 +4,8 @@ import {Ground, GroundItem} from './ground.js';
 import Enemy from './enemy.js';
 import SAT from 'sat';
 import Key from './key';
-import Spell from './spell.js';
 import Fire from './fire.js';
 
-const spell = new Spell();
 const key = new Key();
 
 export default class World {
@@ -155,7 +153,7 @@ export default class World {
       // spell.onSpell(Spell.BOLT);
       const ball = new Fire(this.player.pos.x + this.player.model.w, this.player.pos.y + 10, 5, 5, 'blue');
       ball.update = function(tick) {
-        this.pos.x += tick * 1000
+        this.pos.x += tick * 100
       }
       ball.collide = function(target) {
         target.dead();
@@ -185,8 +183,29 @@ export default class World {
       this.friendlyFire.push(ball)
     }
 
-    if (key.isDown(key.FOUR)) {
-      
+    if (key.isDown(Key.FOUR)) {
+      const ball = new Fire(this.player.pos.x + this.player.model.w, this.player.pos.y + 10, 5, 5, 'red');
+      ball.update = function(tick) {
+        this.pos.x += tick * 100
+      }
+      ball.collide = function(target) {
+        target.jump(400);
+      }
+      this.friendlyFire.push(ball)
+    }
+
+    if (key.isDown(Key.FIVE)) {
+      const ball = new Fire(this.player.pos.x + this.player.model.w, this.player.pos.y + 10, 20, 20, 'orange');
+      ball.update = function(tick) {
+        if (this.model.w == 0) return;
+        this.pos.x += tick * 100
+        this.model.w -= 1;
+        this.model.h -= 1;
+      }
+      ball.collide = function(target) {
+        target.dead(400);
+      }
+      this.friendlyFire.push(ball)
     }
   }
 

@@ -8,6 +8,7 @@ export default class Key {
   static TWO = 'Digit2';
   static THREE = 'Digit3';
   static FOUR = 'Digit4';
+  static FIVE = 'Digit5';
 
   isDown(keyCode) {
       return this._pressed[keyCode];
