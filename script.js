@@ -1,51 +1,84 @@
+import SAT from 'sat';
+
+const GROUND_POS = 100;
+
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+
 const getRandom = (min, max) => {
   var random = Math.random();
   return random * (max - min) + min;
 }
 
-class Vec {
-  constructor(x = 0, y = 0) {
-    this.x = x;
-    this.y = y
+const fillRect = (pos, size, color) => {
+  ctx.fillStyle = color;
+  ctx.fillRect(pos.x, pos.y, size.w, size.h);
+}
+
+class WorldObject {
+  constructor(x, y, w, h, color) {
+    this.pos = new SAT.Vector(x, y);
+    this.model = new SAT.Box(this.pos, w, h);
+    this.color = color || '#ddd';
+  }
+  right(to) {
+    this.pos.x += to;  
+  }
+  left(to) {
+    this.pos.x -= to;
+  }
+  fill() {
+    const {pos, model, color} = this;
+    ctx.fillStyle = color;
+    ctx.fillRect(pos.x, pos.y, model.w, model.h);
   }
 }
 
-class Enemy {
-  constructor(x, y) {
-    this.pos = new Vec(x, y);
-  }
-}
-
-class Player {
+class Enemy extends WorldObject {
   constructor() {
-    this.pos = new Vec(200, 200);
+    super(400, 350, 20, 50, 'black');
+  }
+  dead() {
+    this.pos.x = -100000
+  }
+  collide(obj, res) {
+    if (obj instanceof Player) {
+      if (Math.abs(res.overlapN.y) > 0) {
+        this.dead();
+      }
+    }
   }
 }
 
-class Spell {
+class Player extends WorldObject {
   constructor() {
-    this.activate();
+    super(100, 350, 20, 50, 'white');
   }
-  activate() {
-    if (this.active) return;
-    this.active = true;
+  move(dir) {
+    switch (dir) {
+      case 'forward':
+        this.right(10);
+        break;
+      case 'back':
+        this.left(10);
+        break;
+    }
+  }
+  dead() {
+    this.pos.x = -100000
+  }
+  collide(obj, res) {
+    if (obj instanceof Enemy) {
+      if (Math.abs(res.overlapN.x) > 0) {
+        this.dead();
+      }
+    }
+  }
+}
 
-    var actions = ['ArrowRight', 'ArrowLeft'];
-    console.log(actions);
-    var successActions = 0;
-
-    actions.forEach(action => {
-      document.addEventListener('keydown', function(e) {
-        e.preventDefault();
-        if (e.code === action) {
-          successActions++;
-        }
-
-        if (successActions = actions.length) {
-          console.log('spell')
-        }
-      })
-    })
+class Ground extends WorldObject {
+  constructor() {
+    super(0, canvas.offsetHeight - 100, canvas.offsetWidth, 100, '#ddd');
   }
 }
 
@@ -55,43 +88,53 @@ class World {
     this.addCreatures();
     this.fill();
     this.attachEvents();
+    this.update();
   }
 
   addCreatures() {
     this.player = new Player();
-    this.enemies = [];
-
-    for (var i = 0; i < 10; i++) {
-      this.enemies[i] = new Enemy(getRandom(20, 380), getRandom(20, 380));
-    }
+    this.ground = new Ground();
+    this.enemy = new Enemy();
   }
 
   init() {
-    var canvas = document.getElementById('canvas');
-    this.ctx = canvas.getContext('2d');
+  }
+
+  update() {
+    this.fill();
+    this.collision();
+    requestAnimationFrame(this.update.bind(this));
+  }
+
+  collision() {
+    const response = new SAT.Response();  
+    const collided = SAT.testPolygonPolygon(this.player.model.toPolygon(), this.enemy.model.toPolygon(), response);
+    if (collided) {
+      this.enemy.collide(this.player, response);
+      this.player.collide(this.enemy, response);
+    }
   }
 
   fill() {
-    this.ctx.fillStyle = 'green';
-    this.ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
+    ctx.fillStyle = '#abd5fc';
+    ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
 
-    this.enemies.forEach(enemy => {
-      this.ctx.fillStyle = 'white';
-      this.ctx.fillRect(enemy.pos.x, enemy.pos.y, 10, 10);
-    })
-
-    this.ctx.fillStyle = 'white';
-    this.ctx.fillRect(this.player.pos.x, this.player.pos.y, 20, 20);
+    this.player.fill();
+    this.ground.fill();
+    this.enemy.fill();
   }
 
   attachEvents() {
     document.addEventListener('keydown', function(e) {
-      e.preventDefault();
       switch(e.code) {
-        case 'Enter':
-          new Spell();
+        case 'KeyD':
+          this.player.move('forward');
+          break;
+        case 'KeyA':
+          this.player.move('back')
+          break;
       }
-    })
+    }.bind(this))
   }
 }
 
