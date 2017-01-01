@@ -52,9 +52,9 @@
 
 	var _sat2 = _interopRequireDefault(_sat);
 
-	var _key = __webpack_require__(4);
+	var _key2 = __webpack_require__(4);
 
-	var _key2 = _interopRequireDefault(_key);
+	var _key3 = _interopRequireDefault(_key2);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -66,7 +66,7 @@
 
 	var GROUND_POS = 100;
 	var log = console.log;
-	var key = new _key2.default();
+	var key = new _key3.default();
 
 	var canvas = document.getElementById('canvas');
 	var ctx = canvas.getContext('2d');
@@ -101,16 +101,6 @@
 	      this.pos.x -= to;
 	    }
 	  }, {
-	    key: 'bottom',
-	    value: function bottom(to) {
-	      this.pos.y += to;
-	    }
-	  }, {
-	    key: 'top',
-	    value: function top(to) {
-	      this.pos.y -= to;
-	    }
-	  }, {
 	    key: 'fill',
 	    value: function fill() {
 	      var pos = this.pos,
@@ -129,15 +119,35 @@
 	  _inherits(GravityObject, _WorldObject);
 
 	  function GravityObject() {
+	    var _ref;
+
+	    var _temp, _this, _ret;
+
 	    _classCallCheck(this, GravityObject);
 
-	    return _possibleConstructorReturn(this, (GravityObject.__proto__ || Object.getPrototypeOf(GravityObject)).apply(this, arguments));
+	    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+	      args[_key] = arguments[_key];
+	    }
+
+	    return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = GravityObject.__proto__ || Object.getPrototypeOf(GravityObject)).call.apply(_ref, [this].concat(args))), _this), _this.speed = 0, _temp), _possibleConstructorReturn(_this, _ret);
 	  }
 
 	  _createClass(GravityObject, [{
 	    key: 'gravity',
-	    value: function gravity() {
-	      this.bottom(10);
+	    value: function gravity(tick) {
+	      log('gravity', 350 - this.pos.y);
+	      tick = tick / 1000;
+	      this.pos.y = this.pos.y - this.speed * tick + 4.9 * tick * tick;
+	      this.speed -= 9.8;
+	    }
+	  }, {
+	    key: 'jump',
+	    value: function jump(speed) {
+	      if (this.speed > 0) return;
+
+	      log('speed ' + speed);
+	      this.speed = speed;
+	      this.pos.y -= 1;
 	    }
 	  }]);
 
@@ -192,7 +202,7 @@
 	          this.left(5);
 	          break;
 	        case 'up':
-	          this.top(30);
+	          this.jump(400);
 	          break;
 	      }
 	    }
@@ -236,6 +246,7 @@
 	    this.fill();
 	    this.attachEvents();
 	    this.update();
+	    this._spendTime = 0;
 	  }
 
 	  _createClass(World, [{
@@ -251,14 +262,19 @@
 	  }, {
 	    key: 'update',
 	    value: function update() {
+	      var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+
+	      var tick = time - this.spendTime;
+	      this.spendTime = time;
+
+	      this.collision(tick);
 	      this.checkKeys();
 	      this.fill();
-	      this.collision();
 	      requestAnimationFrame(this.update.bind(this));
 	    }
 	  }, {
 	    key: 'collision',
-	    value: function collision() {
+	    value: function collision(tick) {
 	      var response = new _sat2.default.Response();
 	      var collided = _sat2.default.testPolygonPolygon(this.player.model.toPolygon(), this.enemy.model.toPolygon(), response);
 	      if (collided) {
@@ -267,7 +283,7 @@
 	      }
 	      var playerOnGround = _sat2.default.testPolygonPolygon(this.player.model.toPolygon(), this.ground.model.toPolygon(), response);
 	      if (!playerOnGround) {
-	        this.player.gravity();
+	        this.player.gravity(tick);
 	      }
 
 	      var enemyOnGround = _sat2.default.testPolygonPolygon(this.enemy.model.toPolygon(), this.ground.model.toPolygon(), response);
@@ -288,13 +304,13 @@
 	  }, {
 	    key: 'checkKeys',
 	    value: function checkKeys() {
-	      if (key.isDown(_key2.default.RIGHT)) {
+	      if (key.isDown(_key3.default.RIGHT)) {
 	        this.player.move('forward');
 	      }
-	      if (key.isDown(_key2.default.LEFT)) {
+	      if (key.isDown(_key3.default.LEFT)) {
 	        this.player.move('back');
 	      }
-	      if (key.isDown(_key2.default.UP)) {
+	      if (key.isDown(_key3.default.UP)) {
 	        this.player.move('up');
 	      }
 	    }

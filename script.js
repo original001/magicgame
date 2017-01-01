@@ -30,12 +30,6 @@ class WorldObject {
   left(to) {
     this.pos.x -= to;
   }
-  bottom(to) {
-    this.pos.y += to;
-  }
-  top(to) {
-    this.pos.y -= to;
-  }
   fill() {
     const {pos, model, color} = this;
     ctx.fillStyle = color;
@@ -44,8 +38,21 @@ class WorldObject {
 }
 
 class GravityObject extends WorldObject {
-  gravity() {
-    this.bottom(10);
+  speed = 0;
+
+  gravity(tick) {
+    log('gravity', 350 - this.pos.y);
+    tick = tick / 1000
+    this.pos.y = this.pos.y - this.speed * tick + 4.9 * tick * tick; 
+    this.speed -= 9.8;
+  }
+
+  jump(speed) {
+    if (this.speed > 0) return;
+
+    log(`speed ${speed}`)
+    this.speed = speed;
+    this.pos.y -= 1
   }
 }
 
@@ -78,7 +85,7 @@ class Player extends GravityObject {
         this.left(5);
         break;
       case 'up':
-        this.top(30);
+        this.jump(400);
         break;
     }
   }
@@ -107,6 +114,7 @@ class World {
     this.fill();
     this.attachEvents();
     this.update();
+    this._spendTime = 0;
   }
 
   addCreatures() {
@@ -118,14 +126,17 @@ class World {
   init() {
   }
 
-  update() {
+  update(time = 0) {
+    const tick = time - this.spendTime;
+    this.spendTime = time;
+
+    this.collision(tick);
     this.checkKeys();
     this.fill();
-    this.collision();
     requestAnimationFrame(this.update.bind(this));
   }
 
-  collision() {
+  collision(tick) {
     const response = new SAT.Response();  
     const collided = SAT.testPolygonPolygon(this.player.model.toPolygon(), this.enemy.model.toPolygon(), response);
     if (collided) {
@@ -134,7 +145,7 @@ class World {
     }
     const playerOnGround = SAT.testPolygonPolygon(this.player.model.toPolygon(), this.ground.model.toPolygon(), response);
     if (!playerOnGround) {
-      this.player.gravity();
+      this.player.gravity(tick);
     }
 
     const enemyOnGround = SAT.testPolygonPolygon(this.enemy.model.toPolygon(), this.ground.model.toPolygon(), response);
