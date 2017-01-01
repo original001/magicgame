@@ -41,18 +41,22 @@ class GravityObject extends WorldObject {
   speed = 0;
 
   gravity(tick) {
-    log('gravity', 350 - this.pos.y);
-    tick = tick / 1000
     this.pos.y = this.pos.y - this.speed * tick + 4.9 * tick * tick; 
     this.speed -= 9.8;
   }
 
   jump(speed) {
-    if (this.speed > 0) return;
-
+    if (this.speed !== 0) return;
     log(`speed ${speed}`)
     this.speed = speed;
     this.pos.y -= 1
+  }
+
+  collide(obj, res) {
+    if (obj instanceof Ground) {
+      this.pos.y = obj.pos.y - this.model.h;
+      this.speed = 0;
+    }
   }
 }
 
@@ -64,6 +68,7 @@ class Enemy extends GravityObject {
     this.pos.x = -100000
   }
   collide(obj, res) {
+    super.collide(obj, res);
     if (obj instanceof Player) {
       if (Math.abs(res.overlapN.y) > 0) {
         this.dead();
@@ -93,6 +98,7 @@ class Player extends GravityObject {
     this.pos.x = -100000
   }
   collide(obj, res) {
+    super.collide(obj, res);
     if (obj instanceof Enemy) {
       if (Math.abs(res.overlapN.x) > 0) {
         this.dead();
@@ -127,7 +133,7 @@ class World {
   }
 
   update(time = 0) {
-    const tick = time - this.spendTime;
+    const tick = (time - this.spendTime) / 1000;
     this.spendTime = time;
 
     this.collision(tick);
@@ -146,11 +152,15 @@ class World {
     const playerOnGround = SAT.testPolygonPolygon(this.player.model.toPolygon(), this.ground.model.toPolygon(), response);
     if (!playerOnGround) {
       this.player.gravity(tick);
+    } else {
+      this.player.collide(this.ground, response);
     }
 
     const enemyOnGround = SAT.testPolygonPolygon(this.enemy.model.toPolygon(), this.ground.model.toPolygon(), response);
     if (!enemyOnGround) {
       this.enemy.gravity();
+    } else {
+      this.enemy.collide(this.ground, response);
     }
   }
 

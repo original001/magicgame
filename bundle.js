@@ -46,6 +46,8 @@
 
 	'use strict';
 
+	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _sat = __webpack_require__(1);
@@ -135,19 +137,24 @@
 	  _createClass(GravityObject, [{
 	    key: 'gravity',
 	    value: function gravity(tick) {
-	      log('gravity', 350 - this.pos.y);
-	      tick = tick / 1000;
 	      this.pos.y = this.pos.y - this.speed * tick + 4.9 * tick * tick;
 	      this.speed -= 9.8;
 	    }
 	  }, {
 	    key: 'jump',
 	    value: function jump(speed) {
-	      if (this.speed > 0) return;
-
+	      if (this.speed !== 0) return;
 	      log('speed ' + speed);
 	      this.speed = speed;
 	      this.pos.y -= 1;
+	    }
+	  }, {
+	    key: 'collide',
+	    value: function collide(obj, res) {
+	      if (obj instanceof Ground) {
+	        this.pos.y = obj.pos.y - this.model.h;
+	        this.speed = 0;
+	      }
 	    }
 	  }]);
 
@@ -171,6 +178,7 @@
 	  }, {
 	    key: 'collide',
 	    value: function collide(obj, res) {
+	      _get(Enemy.prototype.__proto__ || Object.getPrototypeOf(Enemy.prototype), 'collide', this).call(this, obj, res);
 	      if (obj instanceof Player) {
 	        if (Math.abs(res.overlapN.y) > 0) {
 	          this.dead();
@@ -214,6 +222,7 @@
 	  }, {
 	    key: 'collide',
 	    value: function collide(obj, res) {
+	      _get(Player.prototype.__proto__ || Object.getPrototypeOf(Player.prototype), 'collide', this).call(this, obj, res);
 	      if (obj instanceof Enemy) {
 	        if (Math.abs(res.overlapN.x) > 0) {
 	          this.dead();
@@ -264,7 +273,7 @@
 	    value: function update() {
 	      var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
 
-	      var tick = time - this.spendTime;
+	      var tick = (time - this.spendTime) / 1000;
 	      this.spendTime = time;
 
 	      this.collision(tick);
@@ -284,11 +293,15 @@
 	      var playerOnGround = _sat2.default.testPolygonPolygon(this.player.model.toPolygon(), this.ground.model.toPolygon(), response);
 	      if (!playerOnGround) {
 	        this.player.gravity(tick);
+	      } else {
+	        this.player.collide(this.ground, response);
 	      }
 
 	      var enemyOnGround = _sat2.default.testPolygonPolygon(this.enemy.model.toPolygon(), this.ground.model.toPolygon(), response);
 	      if (!enemyOnGround) {
 	        this.enemy.gravity();
+	      } else {
+	        this.enemy.collide(this.ground, response);
 	      }
 	    }
 	  }, {
