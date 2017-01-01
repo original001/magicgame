@@ -4,7 +4,10 @@ import {Ground, GroundItem} from './ground.js';
 import Enemy from './enemy.js';
 import SAT from 'sat';
 import Key from './key';
+import Spell from './spell.js';
+import Fire from './fire.js';
 
+const spell = new Spell();
 const key = new Key();
 
 export default class World {
@@ -21,8 +24,10 @@ export default class World {
 
   addCreatures() {
     this.player = new Player();
-    this.ground = [new Ground(), new GroundItem(200, 300, 100, 30)];
+    this.ground = [new Ground(), new GroundItem(200, 320, 100, 20)];
     this.enemies = [new Enemy(300, 350), new Enemy(350, 350)];
+    this.enemyFire = [];
+    this.friendlyFire = [];
   }
 
   init() {
@@ -32,10 +37,27 @@ export default class World {
     const tick = (time - this._spendTime) / 1000;
     this._spendTime = time;
 
-    this.collision(tick);
+    this.updateBounds(tick);
     this.checkKeys();
+    this.collision(tick);
+    this.moveEnemies(tick);
     this.fill();
     requestAnimationFrame(this.update.bind(this));
+  }
+
+  updateBounds(tick) {
+    this.enemyFire.forEach(obj => obj.update(tick));
+    this.friendlyFire.forEach(obj => obj.update(tick));
+  }
+
+  moveEnemies(tick) {
+    this.enemies.forEach(enemy => {
+      if (this.player.pos.x > enemy.pos.x) {
+        enemy.right(tick * 100);
+      } else {
+        enemy.left(tick * 100);
+      }
+    });
   }
 
   collision(tick) {
@@ -60,6 +82,7 @@ export default class World {
     const creatures = [this.player, ...this.enemies];
     creatures.forEach(creature => {
       let collidedGround;
+      let response = new SAT.Response()
       const playerOnGround = this.ground.some(ground => {
          const collided = SAT.testPolygonPolygon(creature.model.toPolygon(), ground.model.toPolygon(), response);
          if (collided) {
@@ -70,7 +93,7 @@ export default class World {
 
       creature.gravity(tick);
 
-      if (playerOnGround) {
+      if (playerOnGround && response.overlap > 0) {
         if (collidedGround instanceof Ground) {
           creature.pos.y = collidedGround.pos.y - creature.model.h;
           creature.speed = 0;
@@ -80,15 +103,41 @@ export default class World {
           if (response.overlapN.x > 0) {
             creature.pos.x = collidedGround.pos.x - creature.model.w;
           }
+          if (response.overlapN.x < 0) {
+            creature.pos.x = collidedGround.pos.x + collidedGround.model.w;
+          }
+          if (response.overlapN.y > 0) {
+            creature.pos.y = collidedGround.pos.y - creature.model.h;
+            creature.speed = 0;
+          }
+          if (response.overlapN.y < 0) {
+            creature.speed = -1;
+            creature.pos.y = collidedGround.pos.y + collidedGround.model.h;
+          }
         }
+      }
+    })
+
+    this.enemies.forEach(enemy => {
+      let collidedFire;
+      const collidedEnemy = this.friendlyFire.some(fire => {
+         const collided = SAT.testPolygonPolygon(enemy.model.toPolygon(), fire.model.toPolygon(), response);
+         if (collided) {
+          collidedFire = fire;
+         }
+         return collided;
+      });
+
+      if (collidedEnemy) {
+        collidedFire.collide(enemy, this.player);
       }
     })
 
   }
 
   fill() {
-    const {player, ground, enemies, world} = this;
-    this.screen.addElements([world, player, ...ground, ...enemies]);
+    const {player, ground, enemies, world, friendlyFire, enemyFire} = this;
+    this.screen.addElements([world, player, ...ground, ...enemies, ...friendlyFire, ...enemyFire]);
   }
 
   checkKeys() {
@@ -100,6 +149,44 @@ export default class World {
     }
     if (key.isDown(Key.UP)) {
       this.player.move('up');
+    }
+    if (key.isDown(Key.ONE)) {
+      // this.player.spell('one');
+      // spell.onSpell(Spell.BOLT);
+      const ball = new Fire(this.player.pos.x + this.player.model.w, this.player.pos.y + 10, 5, 5, 'blue');
+      ball.update = function(tick) {
+        this.pos.x += tick * 1000
+      }
+      ball.collide = function(target) {
+        target.dead();
+      }
+      this.friendlyFire.push(ball)
+    }
+    if (key.isDown(Key.TWO)) {
+      const ball = new Fire(this.player.pos.x + this.player.model.w, this.player.pos.y + 10, 5, 5, 'purple');
+      ball.update = function(tick) {
+        this.pos.x += tick * 100
+      }
+      ball.collide = function(target, player) {
+        const targetPos = target.pos.x;
+        target.pos.x = player.pos.x;
+        player.pos.x = targetPos;
+      }
+      this.friendlyFire.push(ball)
+    }
+    if (key.isDown(Key.THREE)) {
+      const ball = new Fire(this.player.pos.x + this.player.model.w, this.player.pos.y + 10, 5, 5, 'green');
+      ball.update = function(tick) {
+        this.pos.x += tick * 100
+      }
+      ball.collide = function(target) {
+        target.freeze();
+      }
+      this.friendlyFire.push(ball)
+    }
+
+    if (key.isDown(key.FOUR)) {
+      
     }
   }
 
