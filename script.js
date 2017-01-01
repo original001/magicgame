@@ -1,6 +1,9 @@
 import SAT from 'sat';
+import Key from './src/key.js';
 
 const GROUND_POS = 100;
+const log = console.log;
+const key = new Key;
 
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
@@ -27,6 +30,12 @@ class WorldObject {
   left(to) {
     this.pos.x -= to;
   }
+  bottom(to) {
+    this.pos.y += to;
+  }
+  top(to) {
+    this.pos.y -= to;
+  }
   fill() {
     const {pos, model, color} = this;
     ctx.fillStyle = color;
@@ -34,7 +43,13 @@ class WorldObject {
   }
 }
 
-class Enemy extends WorldObject {
+class GravityObject extends WorldObject {
+  gravity() {
+    this.bottom(10);
+  }
+}
+
+class Enemy extends GravityObject {
   constructor() {
     super(400, 350, 20, 50, 'black');
   }
@@ -50,17 +65,20 @@ class Enemy extends WorldObject {
   }
 }
 
-class Player extends WorldObject {
+class Player extends GravityObject {
   constructor() {
     super(100, 350, 20, 50, 'white');
   }
   move(dir) {
     switch (dir) {
       case 'forward':
-        this.right(10);
+        this.right(5);
         break;
       case 'back':
-        this.left(10);
+        this.left(5);
+        break;
+      case 'up':
+        this.top(30);
         break;
     }
   }
@@ -101,6 +119,7 @@ class World {
   }
 
   update() {
+    this.checkKeys();
     this.fill();
     this.collision();
     requestAnimationFrame(this.update.bind(this));
@@ -113,6 +132,15 @@ class World {
       this.enemy.collide(this.player, response);
       this.player.collide(this.enemy, response);
     }
+    const playerOnGround = SAT.testPolygonPolygon(this.player.model.toPolygon(), this.ground.model.toPolygon(), response);
+    if (!playerOnGround) {
+      this.player.gravity();
+    }
+
+    const enemyOnGround = SAT.testPolygonPolygon(this.enemy.model.toPolygon(), this.ground.model.toPolygon(), response);
+    if (!enemyOnGround) {
+      this.enemy.gravity();
+    }
   }
 
   fill() {
@@ -124,17 +152,21 @@ class World {
     this.enemy.fill();
   }
 
+  checkKeys() {
+    if (key.isDown(Key.RIGHT)) {
+      this.player.move('forward');
+    }
+    if (key.isDown(Key.LEFT)) {
+      this.player.move('back');
+    }
+    if (key.isDown(Key.UP)) {
+      this.player.move('up');
+    }
+  }
+
   attachEvents() {
-    document.addEventListener('keydown', function(e) {
-      switch(e.code) {
-        case 'KeyD':
-          this.player.move('forward');
-          break;
-        case 'KeyA':
-          this.player.move('back')
-          break;
-      }
-    }.bind(this))
+    document.addEventListener('keydown', (e) => key.onKeydown(e), false)
+    document.addEventListener('keyup', (e) => key.onKeyup(e), false)
   }
 }
 

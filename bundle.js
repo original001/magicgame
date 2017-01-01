@@ -52,6 +52,10 @@
 
 	var _sat2 = _interopRequireDefault(_sat);
 
+	var _key = __webpack_require__(4);
+
+	var _key2 = _interopRequireDefault(_key);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -61,6 +65,8 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var GROUND_POS = 100;
+	var log = console.log;
+	var key = new _key2.default();
 
 	var canvas = document.getElementById('canvas');
 	var ctx = canvas.getContext('2d');
@@ -95,6 +101,16 @@
 	      this.pos.x -= to;
 	    }
 	  }, {
+	    key: 'bottom',
+	    value: function bottom(to) {
+	      this.pos.y += to;
+	    }
+	  }, {
+	    key: 'top',
+	    value: function top(to) {
+	      this.pos.y -= to;
+	    }
+	  }, {
 	    key: 'fill',
 	    value: function fill() {
 	      var pos = this.pos,
@@ -109,8 +125,27 @@
 	  return WorldObject;
 	}();
 
-	var Enemy = function (_WorldObject) {
-	  _inherits(Enemy, _WorldObject);
+	var GravityObject = function (_WorldObject) {
+	  _inherits(GravityObject, _WorldObject);
+
+	  function GravityObject() {
+	    _classCallCheck(this, GravityObject);
+
+	    return _possibleConstructorReturn(this, (GravityObject.__proto__ || Object.getPrototypeOf(GravityObject)).apply(this, arguments));
+	  }
+
+	  _createClass(GravityObject, [{
+	    key: 'gravity',
+	    value: function gravity() {
+	      this.bottom(10);
+	    }
+	  }]);
+
+	  return GravityObject;
+	}(WorldObject);
+
+	var Enemy = function (_GravityObject) {
+	  _inherits(Enemy, _GravityObject);
 
 	  function Enemy() {
 	    _classCallCheck(this, Enemy);
@@ -135,10 +170,10 @@
 	  }]);
 
 	  return Enemy;
-	}(WorldObject);
+	}(GravityObject);
 
-	var Player = function (_WorldObject2) {
-	  _inherits(Player, _WorldObject2);
+	var Player = function (_GravityObject2) {
+	  _inherits(Player, _GravityObject2);
 
 	  function Player() {
 	    _classCallCheck(this, Player);
@@ -151,10 +186,13 @@
 	    value: function move(dir) {
 	      switch (dir) {
 	        case 'forward':
-	          this.right(10);
+	          this.right(5);
 	          break;
 	        case 'back':
-	          this.left(10);
+	          this.left(5);
+	          break;
+	        case 'up':
+	          this.top(30);
 	          break;
 	      }
 	    }
@@ -175,10 +213,10 @@
 	  }]);
 
 	  return Player;
-	}(WorldObject);
+	}(GravityObject);
 
-	var Ground = function (_WorldObject3) {
-	  _inherits(Ground, _WorldObject3);
+	var Ground = function (_WorldObject2) {
+	  _inherits(Ground, _WorldObject2);
 
 	  function Ground() {
 	    _classCallCheck(this, Ground);
@@ -213,6 +251,7 @@
 	  }, {
 	    key: 'update',
 	    value: function update() {
+	      this.checkKeys();
 	      this.fill();
 	      this.collision();
 	      requestAnimationFrame(this.update.bind(this));
@@ -226,6 +265,15 @@
 	        this.enemy.collide(this.player, response);
 	        this.player.collide(this.enemy, response);
 	      }
+	      var playerOnGround = _sat2.default.testPolygonPolygon(this.player.model.toPolygon(), this.ground.model.toPolygon(), response);
+	      if (!playerOnGround) {
+	        this.player.gravity();
+	      }
+
+	      var enemyOnGround = _sat2.default.testPolygonPolygon(this.enemy.model.toPolygon(), this.ground.model.toPolygon(), response);
+	      if (!enemyOnGround) {
+	        this.enemy.gravity();
+	      }
 	    }
 	  }, {
 	    key: 'fill',
@@ -238,18 +286,27 @@
 	      this.enemy.fill();
 	    }
 	  }, {
+	    key: 'checkKeys',
+	    value: function checkKeys() {
+	      if (key.isDown(_key2.default.RIGHT)) {
+	        this.player.move('forward');
+	      }
+	      if (key.isDown(_key2.default.LEFT)) {
+	        this.player.move('back');
+	      }
+	      if (key.isDown(_key2.default.UP)) {
+	        this.player.move('up');
+	      }
+	    }
+	  }, {
 	    key: 'attachEvents',
 	    value: function attachEvents() {
 	      document.addEventListener('keydown', function (e) {
-	        switch (e.code) {
-	          case 'KeyD':
-	            this.player.move('forward');
-	            break;
-	          case 'KeyA':
-	            this.player.move('back');
-	            break;
-	        }
-	      }.bind(this));
+	        return key.onKeydown(e);
+	      }, false);
+	      document.addEventListener('keyup', function (e) {
+	        return key.onKeyup(e);
+	      }, false);
 	    }
 	  }]);
 
@@ -1284,6 +1341,53 @@
 
 	module.exports = function() { throw new Error("define cannot be used indirect"); };
 
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Key = function () {
+	    function Key() {
+	        _classCallCheck(this, Key);
+
+	        this._pressed = {};
+	    }
+
+	    _createClass(Key, [{
+	        key: 'isDown',
+	        value: function isDown(keyCode) {
+	            return this._pressed[keyCode];
+	        }
+	    }, {
+	        key: 'onKeydown',
+	        value: function onKeydown(event) {
+	            this._pressed[event.code] = true;
+	        }
+	    }, {
+	        key: 'onKeyup',
+	        value: function onKeyup(event) {
+	            delete this._pressed[event.code];
+	        }
+	    }]);
+
+	    return Key;
+	}();
+
+	Key.LEFT = 'KeyA';
+	Key.UP = 'Space';
+	Key.RIGHT = 'KeyD';
+	exports.default = Key;
+	;
 
 /***/ }
 /******/ ]);
