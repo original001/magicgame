@@ -1,3 +1,5 @@
+import SAT from 'sat';
+
 export default class WorldObject {
   constructor(x, y, w, h, color) {
     this.pos = new SAT.Vector(x, y);
