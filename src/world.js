@@ -1,10 +1,10 @@
 import WorldObject from './base.js';
 import Player from './player.js';
 import {Ground, GroundItem} from './ground.js';
-import Enemy from './enemy.js';
+import Enemy, {MagicEnemy} from './enemy.js';
 import SAT from 'sat';
 import Key from './key';
-import Spell, {createSpell} from './spell.js';
+import * as Spell from './spell.js';
 
 const key = new Key();
 
@@ -14,7 +14,6 @@ export default class World {
     this.screen = screen;
     this._spendTime = 0;
 
-    this.init();
     this.addCreatures();
     this.attachEvents();
     this.update();
@@ -23,12 +22,9 @@ export default class World {
   addCreatures() {
     this.player = new Player();
     this.ground = [new Ground(), new GroundItem(200, 320, 100, 20)];
-    this.enemies = [new Enemy(300, 350), new Enemy(350, 350)];
+    this.enemies = [new MagicEnemy(300, 350, Spell.BOLT), new Enemy(350, 350)];
     this.enemyFire = [];
     this.friendlyFire = [];
-  }
-
-  init() {
   }
 
   update(time = 0) {
@@ -51,6 +47,7 @@ export default class World {
   moveEnemies(tick) {
     this.enemies.forEach(enemy => {
       if (this.player.pos.x > enemy.pos.x) {
+        this.makeSpell(Spell.BOLT, enemy);
         enemy.right(tick * 100);
       } else {
         enemy.left(tick * 100);
@@ -74,6 +71,7 @@ export default class World {
         this.player.dead();
       } else {
         collidedEnemy.dead();
+        this.player.enabledSpells = this.player.enabledSpells.concat(collidedEnemy.enabledSpells);
       }
     }
 
@@ -138,6 +136,12 @@ export default class World {
     this.screen.addElements([world, player, ...ground, ...enemies, ...friendlyFire, ...enemyFire]);
   }
 
+  makeSpell(spelltype, source) {
+    const spell = Spell.createSpell(source, spelltype);
+    const to = source === this.player ? this.friendlyFire : this.enemyFire;
+    spell && to.push(spell);
+  }
+
   checkKeys() {
     if (key.isDown(Key.RIGHT)) {
       this.player.move('forward');
@@ -149,19 +153,23 @@ export default class World {
       this.player.move('up');
     }
     if (key.isDown(Key.ONE)) {
-      this.friendlyFire.push(createSpell(this.player, Spell.BOLT))
+      this.makeSpell(Spell.BOLT, this.player);
     }
     if (key.isDown(Key.TWO)) {
-      this.friendlyFire.push(createSpell(this.player, Spell.TELEPORT))
+      const spell = Spell.createSpell(this.player, Spell.TELEPORT);
+      spell && this.friendlyFire.push(spell);
     }
     if (key.isDown(Key.THREE)) {
-      this.friendlyFire.push((createSpell(this.player, Spell.FREEZE)))
+      const spell = Spell.createSpell(this.player, Spell.FREEZE);
+      spell && this.friendlyFire.push(spell);
     }
     if (key.isDown(Key.FOUR)) {
-      this.friendlyFire.push(createSpell(this.player, Spell.KICK))
+      const spell = Spell.createSpell(this.player, Spell.KICK);
+      spell && this.friendlyFire.push(spell);
     }
     if (key.isDown(Key.FIVE)) {
-      this.friendlyFire.push(createSpell(this.player, Spell.FIRE))
+      const spell = Spell.createSpell(this.player, Spell.FIRE);
+      spell && this.friendlyFire.push(spell);
     }
   }
 

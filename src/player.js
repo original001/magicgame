@@ -1,7 +1,9 @@
 import GravityObject from './gravity.js';
 import WorldObject from './base.js';
+import * as Spells from './spell.js';
 
 export default class Player extends GravityObject {
+  enabledSpells = [];
   constructor() {
     super(100, 350, 20, 30, 'white');
   }

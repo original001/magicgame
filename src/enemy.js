@@ -8,3 +8,13 @@ export default class Enemy extends GravityObject {
     this.pos.x = -100000
   }
 }
+
+export class MagicEnemy extends Enemy {
+  enabledSpells = [];
+  color = 'blue';
+
+  constructor(x, y, spellType) {
+    super(x, y);
+    this.enabledSpells = [spellType];
+  }
+}

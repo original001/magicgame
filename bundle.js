@@ -102,9 +102,11 @@
 
 	var _key2 = _interopRequireDefault(_key);
 
-	var _spell = __webpack_require__(14);
+	var _spell4 = __webpack_require__(14);
 
-	var _spell2 = _interopRequireDefault(_spell);
+	var Spell = _interopRequireWildcard(_spell4);
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -122,7 +124,6 @@
 	    this.screen = screen;
 	    this._spendTime = 0;
 
-	    this.init();
 	    this.addCreatures();
 	    this.attachEvents();
 	    this.update();
@@ -133,13 +134,10 @@
 	    value: function addCreatures() {
 	      this.player = new _player2.default();
 	      this.ground = [new _ground.Ground(), new _ground.GroundItem(200, 320, 100, 20)];
-	      this.enemies = [new _enemy2.default(300, 350), new _enemy2.default(350, 350)];
+	      this.enemies = [new _enemy.MagicEnemy(300, 350, Spell.BOLT), new _enemy2.default(350, 350)];
 	      this.enemyFire = [];
 	      this.friendlyFire = [];
 	    }
-	  }, {
-	    key: 'init',
-	    value: function init() {}
 	  }, {
 	    key: 'update',
 	    value: function update() {
@@ -172,6 +170,7 @@
 
 	      this.enemies.forEach(function (enemy) {
 	        if (_this.player.pos.x > enemy.pos.x) {
+	          _this.makeSpell(Spell.BOLT, enemy);
 	          enemy.right(tick * 100);
 	        } else {
 	          enemy.left(tick * 100);
@@ -198,6 +197,7 @@
 	          this.player.dead();
 	        } else {
 	          collidedEnemy.dead();
+	          this.player.enabledSpells = this.player.enabledSpells.concat(collidedEnemy.enabledSpells);
 	        }
 	      }
 
@@ -268,6 +268,13 @@
 	      this.screen.addElements([world, player].concat(_toConsumableArray(ground), _toConsumableArray(enemies), _toConsumableArray(friendlyFire), _toConsumableArray(enemyFire)));
 	    }
 	  }, {
+	    key: 'makeSpell',
+	    value: function makeSpell(spelltype, source) {
+	      var spell = Spell.createSpell(source, spelltype);
+	      var to = source === this.player ? this.friendlyFire : this.enemyFire;
+	      spell && to.push(spell);
+	    }
+	  }, {
 	    key: 'checkKeys',
 	    value: function checkKeys() {
 	      if (key.isDown(_key2.default.RIGHT)) {
@@ -280,19 +287,23 @@
 	        this.player.move('up');
 	      }
 	      if (key.isDown(_key2.default.ONE)) {
-	        this.friendlyFire.push((0, _spell.createSpell)(this.player, _spell2.default.BOLT));
+	        this.makeSpell(Spell.BOLT, this.player);
 	      }
 	      if (key.isDown(_key2.default.TWO)) {
-	        this.friendlyFire.push((0, _spell.createSpell)(this.player, _spell2.default.TELEPORT));
+	        var spell = Spell.createSpell(this.player, Spell.TELEPORT);
+	        spell && this.friendlyFire.push(spell);
 	      }
 	      if (key.isDown(_key2.default.THREE)) {
-	        this.friendlyFire.push((0, _spell.createSpell)(this.player, _spell2.default.FREEZE));
+	        var _spell = Spell.createSpell(this.player, Spell.FREEZE);
+	        _spell && this.friendlyFire.push(_spell);
 	      }
 	      if (key.isDown(_key2.default.FOUR)) {
-	        this.friendlyFire.push((0, _spell.createSpell)(this.player, _spell2.default.KICK));
+	        var _spell2 = Spell.createSpell(this.player, Spell.KICK);
+	        _spell2 && this.friendlyFire.push(_spell2);
 	      }
 	      if (key.isDown(_key2.default.FIVE)) {
-	        this.friendlyFire.push((0, _spell.createSpell)(this.player, _spell2.default.FIRE));
+	        var _spell3 = Spell.createSpell(this.player, Spell.FIRE);
+	        _spell3 && this.friendlyFire.push(_spell3);
 	      }
 	    }
 	  }, {
@@ -360,6 +371,12 @@
 
 	var _base2 = _interopRequireDefault(_base);
 
+	var _spell2 = __webpack_require__(14);
+
+	var Spells = _interopRequireWildcard(_spell2);
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -374,7 +391,10 @@
 	  function Player() {
 	    _classCallCheck(this, Player);
 
-	    return _possibleConstructorReturn(this, (Player.__proto__ || Object.getPrototypeOf(Player)).call(this, 100, 350, 20, 30, 'white'));
+	    var _this = _possibleConstructorReturn(this, (Player.__proto__ || Object.getPrototypeOf(Player)).call(this, 100, 350, 20, 30, 'white'));
+
+	    _this.enabledSpells = [];
+	    return _this;
 	  }
 
 	  _createClass(Player, [{
@@ -468,6 +488,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	exports.MagicEnemy = undefined;
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -503,6 +524,24 @@
 	}(_gravity2.default);
 
 	exports.default = Enemy;
+
+	var MagicEnemy = exports.MagicEnemy = function (_Enemy) {
+	  _inherits(MagicEnemy, _Enemy);
+
+	  function MagicEnemy(x, y, spellType) {
+	    _classCallCheck(this, MagicEnemy);
+
+	    var _this2 = _possibleConstructorReturn(this, (MagicEnemy.__proto__ || Object.getPrototypeOf(MagicEnemy)).call(this, x, y));
+
+	    _this2.enabledSpells = [];
+	    _this2.color = 'blue';
+
+	    _this2.enabledSpells = [spellType];
+	    return _this2;
+	  }
+
+	  return MagicEnemy;
+	}(Enemy);
 
 /***/ },
 /* 7 */
@@ -1728,7 +1767,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.createSpell = undefined;
+	exports.createSpell = exports.FIRE = exports.KICK = exports.FREEZE = exports.TELEPORT = exports.BOLT = undefined;
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -1743,6 +1782,12 @@
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var BOLT = exports.BOLT = 1;
+	var TELEPORT = exports.TELEPORT = 2;
+	var FREEZE = exports.FREEZE = 3;
+	var KICK = exports.KICK = 4;
+	var FIRE = exports.FIRE = 5;
 
 	var Spell = function (_WorldObject) {
 	  _inherits(Spell, _WorldObject);
@@ -1764,16 +1809,12 @@
 	  return Spell;
 	}(_base2.default);
 
-	Spell.BOLT = 1;
-	Spell.TELEPORT = 2;
-	Spell.FREEZE = 3;
-	Spell.KICK = 4;
-	Spell.FIRE = 5;
 	exports.default = Spell;
 	var createSpell = exports.createSpell = function createSpell(source, type) {
 	  var spell = void 0;
+	  if (!source.enabledSpells || source.enabledSpells.indexOf(type) === -1) return null;
 	  switch (type) {
-	    case Spell.BOLT:
+	    case BOLT:
 	      spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'blue');
 	      spell.update = function (tick) {
 	        this.pos.x += tick * 100;
@@ -1782,7 +1823,7 @@
 	        target.dead();
 	      };
 	      break;
-	    case Spell.TELEPORT:
+	    case TELEPORT:
 	      spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'purple');
 	      spell.update = function (tick) {
 	        this.pos.x += tick * 100;
@@ -1793,7 +1834,7 @@
 	        player.pos.x = targetPos;
 	      };
 	      break;
-	    case Spell.FREEZE:
+	    case FREEZE:
 	      spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'green');
 	      spell.update = function (tick) {
 	        this.pos.x += tick * 100;
@@ -1802,7 +1843,7 @@
 	        target.freeze();
 	      };
 	      break;
-	    case Spell.KICK:
+	    case KICK:
 	      spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'red');
 	      spell.update = function (tick) {
 	        this.pos.x += tick * 100;
@@ -1811,7 +1852,7 @@
 	        target.jump(400);
 	      };
 	      break;
-	    case Spell.FIRE:
+	    case FIRE:
 	      spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 20, 20, 'orange');
 	      spell.update = function (tick) {
 	        if (this.model.w == 0) return;
