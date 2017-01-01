@@ -17,8 +17,9 @@ export const createSpell = (source, type) => {
   switch (type) {
     case BOLT:
       spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'blue');
+      const speed = 200 * source.direction;
       spell.update = function(tick) {
-        this.pos.x += tick * 100
+        this.pos.x += tick * speed;
       }
       spell.collide = function(target) {
         target.dead();
@@ -27,7 +28,7 @@ export const createSpell = (source, type) => {
     case TELEPORT:
       spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'purple');
       spell.update = function(tick) {
-        this.pos.x += tick * 100
+        this.pos.x += tick * 100 * source.direction;
       }
       spell.collide = function(target, player) {
         const targetPos = target.pos.x;
@@ -38,7 +39,7 @@ export const createSpell = (source, type) => {
     case FREEZE:
       spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'green');
       spell.update = function(tick) {
-        this.pos.x += tick * 100
+        this.pos.x += tick * 100 * source.direction;
       }
       spell.collide = function(target) {
         target.freeze();
@@ -47,7 +48,7 @@ export const createSpell = (source, type) => {
     case KICK:
       spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'red');
       spell.update = function(tick) {
-        this.pos.x += tick * 100
+        this.pos.x += tick * 100 * source.direction;
       }
       spell.collide = function(target) {
         target.jump(400);
@@ -57,7 +58,7 @@ export const createSpell = (source, type) => {
       spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 20, 20, 'orange');
       spell.update = function(tick) {
         if (this.model.w == 0) return;
-        this.pos.x += tick * 100
+        this.pos.x += tick * 100 * source.direction;
         this.model.w -= 1;
         this.model.h -= 1;
       }

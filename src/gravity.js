@@ -4,15 +4,18 @@ import {G} from './constants.js';
 export default class GravityObject extends WorldObject {
   speed = 0;
   frozen = false;
+  direction = 1;
 
   right(to) {
     if (this.frozen) return;
     this.pos.x += to;  
+    this.direction = 1;
   }
   
   left(to) {
     if (this.frozen) return;
     this.pos.x -= to;
+    this.direction = -1;
   }
 
   gravity(tick) {

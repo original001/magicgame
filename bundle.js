@@ -134,7 +134,7 @@
 	    value: function addCreatures() {
 	      this.player = new _player2.default();
 	      this.ground = [new _ground.Ground(), new _ground.GroundItem(200, 320, 100, 20)];
-	      this.enemies = [new _enemy.MagicEnemy(300, 350, Spell.BOLT), new _enemy2.default(350, 350)];
+	      this.enemies = [new _enemy.MagicEnemy(300, 370, Spell.BOLT), new _enemy2.default(370, 350)];
 	      this.enemyFire = [];
 	      this.friendlyFire = [];
 	    }
@@ -169,8 +169,8 @@
 	      var _this = this;
 
 	      this.enemies.forEach(function (enemy) {
+	        _this.makeSpell(Spell.BOLT, enemy);
 	        if (_this.player.pos.x > enemy.pos.x) {
-	          _this.makeSpell(Spell.BOLT, enemy);
 	          enemy.right(tick * 100);
 	        } else {
 	          enemy.left(tick * 100);
@@ -371,9 +371,9 @@
 
 	var _base2 = _interopRequireDefault(_base);
 
-	var _spell2 = __webpack_require__(14);
+	var _spell = __webpack_require__(14);
 
-	var Spells = _interopRequireWildcard(_spell2);
+	var Spells = _interopRequireWildcard(_spell);
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -410,14 +410,6 @@
 	        case 'up':
 	          this.jump(300);
 	          break;
-	      }
-	    }
-	  }, {
-	    key: 'spell',
-	    value: function spell(_spell) {
-	      switch (_spell) {
-	        case 'one':
-	          var ball = new _base2.default(this.pos.x, this.pos.y, 5, 5, 'blue');
 	      }
 	    }
 	  }, {
@@ -1705,7 +1697,7 @@
 	      args[_key] = arguments[_key];
 	    }
 
-	    return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = GravityObject.__proto__ || Object.getPrototypeOf(GravityObject)).call.apply(_ref, [this].concat(args))), _this), _this.speed = 0, _this.frozen = false, _temp), _possibleConstructorReturn(_this, _ret);
+	    return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = GravityObject.__proto__ || Object.getPrototypeOf(GravityObject)).call.apply(_ref, [this].concat(args))), _this), _this.speed = 0, _this.frozen = false, _this.direction = 1, _temp), _possibleConstructorReturn(_this, _ret);
 	  }
 
 	  _createClass(GravityObject, [{
@@ -1713,12 +1705,14 @@
 	    value: function right(to) {
 	      if (this.frozen) return;
 	      this.pos.x += to;
+	      this.direction = 1;
 	    }
 	  }, {
 	    key: 'left',
 	    value: function left(to) {
 	      if (this.frozen) return;
 	      this.pos.x -= to;
+	      this.direction = -1;
 	    }
 	  }, {
 	    key: 'gravity',
@@ -1813,58 +1807,63 @@
 	var createSpell = exports.createSpell = function createSpell(source, type) {
 	  var spell = void 0;
 	  if (!source.enabledSpells || source.enabledSpells.indexOf(type) === -1) return null;
-	  switch (type) {
-	    case BOLT:
-	      spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'blue');
-	      spell.update = function (tick) {
-	        this.pos.x += tick * 100;
-	      };
-	      spell.collide = function (target) {
-	        target.dead();
-	      };
-	      break;
-	    case TELEPORT:
-	      spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'purple');
-	      spell.update = function (tick) {
-	        this.pos.x += tick * 100;
-	      };
-	      spell.collide = function (target, player) {
-	        var targetPos = target.pos.x;
-	        target.pos.x = player.pos.x;
-	        player.pos.x = targetPos;
-	      };
-	      break;
-	    case FREEZE:
-	      spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'green');
-	      spell.update = function (tick) {
-	        this.pos.x += tick * 100;
-	      };
-	      spell.collide = function (target) {
-	        target.freeze();
-	      };
-	      break;
-	    case KICK:
-	      spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'red');
-	      spell.update = function (tick) {
-	        this.pos.x += tick * 100;
-	      };
-	      spell.collide = function (target) {
-	        target.jump(400);
-	      };
-	      break;
-	    case FIRE:
-	      spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 20, 20, 'orange');
-	      spell.update = function (tick) {
-	        if (this.model.w == 0) return;
-	        this.pos.x += tick * 100;
-	        this.model.w -= 1;
-	        this.model.h -= 1;
-	      };
-	      spell.collide = function (target) {
-	        target.dead(400);
-	      };
-	      break;
-	  }
+
+	  (function () {
+	    switch (type) {
+	      case BOLT:
+	        spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'blue');
+	        var speed = 200 * source.direction;
+	        spell.update = function (tick) {
+	          this.pos.x += tick * speed;
+	        };
+	        spell.collide = function (target) {
+	          target.dead();
+	        };
+	        break;
+	      case TELEPORT:
+	        spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'purple');
+	        spell.update = function (tick) {
+	          this.pos.x += tick * 100 * source.direction;
+	        };
+	        spell.collide = function (target, player) {
+	          var targetPos = target.pos.x;
+	          target.pos.x = player.pos.x;
+	          player.pos.x = targetPos;
+	        };
+	        break;
+	      case FREEZE:
+	        spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'green');
+	        spell.update = function (tick) {
+	          this.pos.x += tick * 100 * source.direction;
+	        };
+	        spell.collide = function (target) {
+	          target.freeze();
+	        };
+	        break;
+	      case KICK:
+	        spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'red');
+	        spell.update = function (tick) {
+	          this.pos.x += tick * 100 * source.direction;
+	        };
+	        spell.collide = function (target) {
+	          target.jump(400);
+	        };
+	        break;
+	      case FIRE:
+	        spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 20, 20, 'orange');
+	        spell.update = function (tick) {
+	          if (this.model.w == 0) return;
+	          this.pos.x += tick * 100 * source.direction;
+	          this.model.w -= 1;
+	          this.model.h -= 1;
+	        };
+	        spell.collide = function (target) {
+	          target.dead(400);
+	        };
+	        break;
+	    }
+	  })();
+
 	  return spell;
 	};
 

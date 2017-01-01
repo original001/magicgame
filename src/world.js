@@ -22,7 +22,7 @@ export default class World {
   addCreatures() {
     this.player = new Player();
     this.ground = [new Ground(), new GroundItem(200, 320, 100, 20)];
-    this.enemies = [new MagicEnemy(300, 350, Spell.BOLT), new Enemy(350, 350)];
+    this.enemies = [new MagicEnemy(300, 370, Spell.BOLT), new Enemy(370, 350)];
     this.enemyFire = [];
     this.friendlyFire = [];
   }
@@ -46,8 +46,8 @@ export default class World {
 
   moveEnemies(tick) {
     this.enemies.forEach(enemy => {
+      this.makeSpell(Spell.BOLT, enemy);
       if (this.player.pos.x > enemy.pos.x) {
-        this.makeSpell(Spell.BOLT, enemy);
         enemy.right(tick * 100);
       } else {
         enemy.left(tick * 100);

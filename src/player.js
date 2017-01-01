@@ -20,12 +20,6 @@ export default class Player extends GravityObject {
         break;
     }
   }
-  spell(spell) {
-    switch(spell) {
-      case 'one':
-        const ball = new WorldObject(this.pos.x, this.pos.y, 5, 5, 'blue');
-    }
-  }
   dead() {
     this.pos.x = -100000
   }
