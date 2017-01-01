@@ -254,6 +254,19 @@
 	          collidedFire.collide(enemy, _this2.player);
 	        }
 	      });
+
+	      var collidedFire = void 0;
+	      var collidedPlayer = this.enemyFire.some(function (fire) {
+	        var collided = _sat2.default.testPolygonPolygon(_this2.player.model.toPolygon(), fire.model.toPolygon(), response);
+	        if (collided) {
+	          collidedFire = fire;
+	        }
+	        return collided;
+	      });
+
+	      if (collidedPlayer) {
+	        collidedFire.collide(this.player, this.enemies[0]);
+	      }
 	    }
 	  }, {
 	    key: 'fill',
@@ -1811,7 +1824,7 @@
 	  (function () {
 	    switch (type) {
 	      case BOLT:
-	        spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'blue');
+	        spell = new Spell(source.pos.x + source.model.w / 2, source.pos.y + 10, 5, 5, 'blue');
 	        var speed = 200 * source.direction;
 	        spell.update = function (tick) {
 	          this.pos.x += tick * speed;

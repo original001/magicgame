@@ -129,6 +129,18 @@ export default class World {
       }
     })
 
+    let collidedFire;
+    const collidedPlayer = this.enemyFire.some(fire => {
+       const collided = SAT.testPolygonPolygon(this.player.model.toPolygon(), fire.model.toPolygon(), response);
+       if (collided) {
+        collidedFire = fire;
+       }
+       return collided;
+    });
+
+    if (collidedPlayer) {
+      collidedFire.collide(this.player, this.enemies[0]);
+    }
   }
 
   fill() {

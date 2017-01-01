@@ -16,7 +16,7 @@ export const createSpell = (source, type) => {
   if (!source.enabledSpells || source.enabledSpells.indexOf(type) === -1) return null;
   switch (type) {
     case BOLT:
-      spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'blue');
+      spell = new Spell(source.pos.x + source.model.w/2, source.pos.y + 10, 5, 5, 'blue');
       const speed = 200 * source.direction;
       spell.update = function(tick) {
         this.pos.x += tick * speed;
