@@ -102,9 +102,9 @@
 
 	var _key2 = _interopRequireDefault(_key);
 
-	var _fire = __webpack_require__(15);
+	var _spell = __webpack_require__(14);
 
-	var _fire2 = _interopRequireDefault(_fire);
+	var _spell2 = _interopRequireDefault(_spell);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -280,63 +280,19 @@
 	        this.player.move('up');
 	      }
 	      if (key.isDown(_key2.default.ONE)) {
-	        // this.player.spell('one');
-	        // spell.onSpell(Spell.BOLT);
-	        var ball = new _fire2.default(this.player.pos.x + this.player.model.w, this.player.pos.y + 10, 5, 5, 'blue');
-	        ball.update = function (tick) {
-	          this.pos.x += tick * 100;
-	        };
-	        ball.collide = function (target) {
-	          target.dead();
-	        };
-	        this.friendlyFire.push(ball);
+	        this.friendlyFire.push((0, _spell.createSpell)(this.player, _spell2.default.BOLT));
 	      }
 	      if (key.isDown(_key2.default.TWO)) {
-	        var _ball = new _fire2.default(this.player.pos.x + this.player.model.w, this.player.pos.y + 10, 5, 5, 'purple');
-	        _ball.update = function (tick) {
-	          this.pos.x += tick * 100;
-	        };
-	        _ball.collide = function (target, player) {
-	          var targetPos = target.pos.x;
-	          target.pos.x = player.pos.x;
-	          player.pos.x = targetPos;
-	        };
-	        this.friendlyFire.push(_ball);
+	        this.friendlyFire.push((0, _spell.createSpell)(this.player, _spell2.default.TELEPORT));
 	      }
 	      if (key.isDown(_key2.default.THREE)) {
-	        var _ball2 = new _fire2.default(this.player.pos.x + this.player.model.w, this.player.pos.y + 10, 5, 5, 'green');
-	        _ball2.update = function (tick) {
-	          this.pos.x += tick * 100;
-	        };
-	        _ball2.collide = function (target) {
-	          target.freeze();
-	        };
-	        this.friendlyFire.push(_ball2);
+	        this.friendlyFire.push((0, _spell.createSpell)(this.player, _spell2.default.FREEZE));
 	      }
-
 	      if (key.isDown(_key2.default.FOUR)) {
-	        var _ball3 = new _fire2.default(this.player.pos.x + this.player.model.w, this.player.pos.y + 10, 5, 5, 'red');
-	        _ball3.update = function (tick) {
-	          this.pos.x += tick * 100;
-	        };
-	        _ball3.collide = function (target) {
-	          target.jump(400);
-	        };
-	        this.friendlyFire.push(_ball3);
+	        this.friendlyFire.push((0, _spell.createSpell)(this.player, _spell2.default.KICK));
 	      }
-
 	      if (key.isDown(_key2.default.FIVE)) {
-	        var _ball4 = new _fire2.default(this.player.pos.x + this.player.model.w, this.player.pos.y + 10, 20, 20, 'orange');
-	        _ball4.update = function (tick) {
-	          if (this.model.w == 0) return;
-	          this.pos.x += tick * 100;
-	          this.model.w -= 1;
-	          this.model.h -= 1;
-	        };
-	        _ball4.collide = function (target) {
-	          target.dead(400);
-	        };
-	        this.friendlyFire.push(_ball4);
+	        this.friendlyFire.push((0, _spell.createSpell)(this.player, _spell2.default.FIRE));
 	      }
 	    }
 	  }, {
@@ -1764,8 +1720,7 @@
 	var G = exports.G = 9.8;
 
 /***/ },
-/* 14 */,
-/* 15 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1773,6 +1728,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	exports.createSpell = undefined;
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -1788,16 +1744,16 @@
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-	var Fire = function (_WorldObject) {
-	  _inherits(Fire, _WorldObject);
+	var Spell = function (_WorldObject) {
+	  _inherits(Spell, _WorldObject);
 
-	  function Fire() {
-	    _classCallCheck(this, Fire);
+	  function Spell() {
+	    _classCallCheck(this, Spell);
 
-	    return _possibleConstructorReturn(this, (Fire.__proto__ || Object.getPrototypeOf(Fire)).apply(this, arguments));
+	    return _possibleConstructorReturn(this, (Spell.__proto__ || Object.getPrototypeOf(Spell)).apply(this, arguments));
 	  }
 
-	  _createClass(Fire, [{
+	  _createClass(Spell, [{
 	    key: 'update',
 	    value: function update() {}
 	  }, {
@@ -1805,10 +1761,71 @@
 	    value: function collide() {}
 	  }]);
 
-	  return Fire;
+	  return Spell;
 	}(_base2.default);
 
-	exports.default = Fire;
+	Spell.BOLT = 1;
+	Spell.TELEPORT = 2;
+	Spell.FREEZE = 3;
+	Spell.KICK = 4;
+	Spell.FIRE = 5;
+	exports.default = Spell;
+	var createSpell = exports.createSpell = function createSpell(source, type) {
+	  var spell = void 0;
+	  switch (type) {
+	    case Spell.BOLT:
+	      spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'blue');
+	      spell.update = function (tick) {
+	        this.pos.x += tick * 100;
+	      };
+	      spell.collide = function (target) {
+	        target.dead();
+	      };
+	      break;
+	    case Spell.TELEPORT:
+	      spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'purple');
+	      spell.update = function (tick) {
+	        this.pos.x += tick * 100;
+	      };
+	      spell.collide = function (target, player) {
+	        var targetPos = target.pos.x;
+	        target.pos.x = player.pos.x;
+	        player.pos.x = targetPos;
+	      };
+	      break;
+	    case Spell.FREEZE:
+	      spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'green');
+	      spell.update = function (tick) {
+	        this.pos.x += tick * 100;
+	      };
+	      spell.collide = function (target) {
+	        target.freeze();
+	      };
+	      break;
+	    case Spell.KICK:
+	      spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'red');
+	      spell.update = function (tick) {
+	        this.pos.x += tick * 100;
+	      };
+	      spell.collide = function (target) {
+	        target.jump(400);
+	      };
+	      break;
+	    case Spell.FIRE:
+	      spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 20, 20, 'orange');
+	      spell.update = function (tick) {
+	        if (this.model.w == 0) return;
+	        this.pos.x += tick * 100;
+	        this.model.w -= 1;
+	        this.model.h -= 1;
+	      };
+	      spell.collide = function (target) {
+	        target.dead(400);
+	      };
+	      break;
+	  }
+	  return spell;
+	};
 
 /***/ }
 /******/ ]);
