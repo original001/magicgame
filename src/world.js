@@ -4,7 +4,7 @@ import {Ground, GroundItem} from './ground.js';
 import Enemy, {MagicEnemy} from './enemy.js';
 import SAT from 'sat';
 import Key from './key';
-import * as Spell from './spell.js';
+import Spell, * as spell from './spell.js';
 
 const key = new Key();
 
@@ -34,9 +34,7 @@ export default class World {
   addCreatures() {
     this.player = new Player();
     this.ground = [new Ground(), new GroundItem(200, 320, 100, 20)];
-    this.enemies = [new MagicEnemy(300, 370, Spell.BOLT), new Enemy(370, 350)];
-    this.enemyFire = [];
-    this.friendlyFire = [];
+    this.enemies = [new MagicEnemy(300, 370, spell.BOLT), new Enemy(370, 350)];
   }
 
   update(time = 0) {
@@ -52,17 +50,17 @@ export default class World {
   }
 
   updateBounds(tick) {
-    this.enemyFire.forEach(obj => obj.update(tick));
-    this.friendlyFire.forEach(obj => obj.update(tick));
+    this.enemies.forEach(enemy => enemy.children.forEach(obj => obj.update(tick)));
+    this.player.children.forEach(obj => obj.update(tick));
   }
 
   moveEnemies(tick) {
     this.enemies.forEach(enemy => {
-      this.makeSpell(Spell.BOLT, enemy);
+      enemy.spell(spell.BOLT);
       if (this.player.pos.x > enemy.pos.x) {
-        enemy.right(tick * 100);
+        enemy.move('forward');
       } else {
-        enemy.left(tick * 100);
+        enemy.move('back');
       }
     });
   }
@@ -115,29 +113,24 @@ export default class World {
 
     this.enemies.forEach(enemy => {
       const response = new SAT.Response()
-      const collidedFire = checkCollided(this.friendlyFire, enemy, response);
+      const collidedWithEnemyFire = checkCollided(this.player.children, enemy, response);
 
-      if (collidedFire) {
-        collidedFire.collide(enemy, this.player);
+      if (collidedWithEnemyFire instanceof Spell) {
+        collidedWithEnemyFire.collide(enemy, this.player);
+      }
+
+      const collidedWithPlayerFire = checkCollided(enemy.children, this.player, response)
+
+      if (collidedWithPlayerFire instanceof Spell) {
+        collidedWithPlayerFire.collide(this.player, this.enemies[0]);
       }
     })
 
-    const collidedFire = checkCollided(this.enemyFire, this.player, response)
-
-    if (collidedFire) {
-      collidedFire.collide(this.player, this.enemies[0]);
-    }
   }
 
   fill() {
-    const {player, ground, enemies, world, friendlyFire, enemyFire} = this;
-    this.screen.addElements([world, player, ...ground, ...enemies, ...friendlyFire, ...enemyFire]);
-  }
-
-  makeSpell(spelltype, source) {
-    const spell = Spell.createSpell(source, spelltype);
-    const to = source === this.player ? this.friendlyFire : this.enemyFire;
-    spell && to.push(spell);
+    const {player, ground, enemies, world} = this;
+    this.screen.addElements([world, player, ...ground, ...enemies]);
   }
 
   checkKeys() {
@@ -151,22 +144,22 @@ export default class World {
       this.player.move('up');
     }
     if (key.isDown(Key.ONE)) {
-      this.makeSpell(Spell.BOLT, this.player);
+      this.player.spell(spell.BOLT);
     }
     if (key.isDown(Key.TWO)) {
-      const spell = Spell.createSpell(this.player, Spell.TELEPORT);
+      const spell = spell.createSpell(this.player, spell.TELEPORT);
       spell && this.friendlyFire.push(spell);
     }
     if (key.isDown(Key.THREE)) {
-      const spell = Spell.createSpell(this.player, Spell.FREEZE);
+      const spell = spell.createSpell(this.player, spell.FREEZE);
       spell && this.friendlyFire.push(spell);
     }
     if (key.isDown(Key.FOUR)) {
-      const spell = Spell.createSpell(this.player, Spell.KICK);
+      const spell = spell.createSpell(this.player, spell.KICK);
       spell && this.friendlyFire.push(spell);
     }
     if (key.isDown(Key.FIVE)) {
-      const spell = Spell.createSpell(this.player, Spell.FIRE);
+      const spell = spell.createSpell(this.player, spell.FIRE);
       spell && this.friendlyFire.push(spell);
     }
   }

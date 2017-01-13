@@ -1,20 +1,13 @@
-import GravityObject from './gravity.js';
+import Creature from './creature.js';
 
-export default class Enemy extends GravityObject {
-  constructor(x, y) {
+export default class Enemy extends Creature {
+  constructor(x, y, spellType) {
     super(x, y, 20, 30, 'black');
-  }
-  dead() {
-    this.pos.x = -100000
+    this.enabledSpells = [spellType];
+    this.movespeed.x = 2;
   }
 }
 
 export class MagicEnemy extends Enemy {
-  enabledSpells = [];
   color = 'blue';
-
-  constructor(x, y, spellType) {
-    super(x, y);
-    this.enabledSpells = [spellType];
-  }
 }

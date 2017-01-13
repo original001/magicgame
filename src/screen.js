@@ -8,6 +8,11 @@ export default class Screen {
       const {pos, model, color} = elem;
       this.ctx.fillStyle = color;
       this.ctx.fillRect(pos.x, pos.y, model.w, model.h);
+      elem.children.forEach(child => {
+        const {pos, model, color} = child;
+        this.ctx.fillStyle = color;
+        this.ctx.fillRect(pos.x, pos.y, model.w, model.h);
+      })
     })
   }
 }

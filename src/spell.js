@@ -7,21 +7,32 @@ export const KICK = 4;
 export const FIRE = 5;
 
 export default class Spell extends WorldObject {
+  finished = false;
+  startTime = 0;
   update() {} 
   collide() {} 
 }
 
 export const createSpell = (source, type) => {
   let spell;
-  if (!source.enabledSpells || source.enabledSpells.indexOf(type) === -1) return null;
   switch (type) {
     case BOLT:
+      let _resolve;
+      const promise = new Promise(resolve => {
+        _resolve = resolve;
+      })
       spell = new Spell(source.pos.x + source.model.w/2, source.pos.y + 10, 5, 5, 'blue');
+      spell.promise = promise;
       const speed = 200 * source.direction;
       spell.update = function(tick) {
+        if (this.startTime > 1) {
+          _resolve();
+        }
         this.pos.x += tick * speed;
+        this.startTime += tick;
       }
       spell.collide = function(target) {
+        _resolve();
         target.dead();
       }
       break;
@@ -66,6 +77,8 @@ export const createSpell = (source, type) => {
         target.dead(400);
       }
       break;
+    default:
+      throw new Error('Unknown spell')
   }
   return spell;
 }
