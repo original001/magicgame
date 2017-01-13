@@ -84,7 +84,6 @@ export default class World {
         this.player.dead();
       } else {
         collidedEnemy.dead();
-        this.player.move('up')
         this.player.enabledSpells = this.player.enabledSpells.concat(collidedEnemy.enabledSpells);
       }
     }
@@ -94,10 +93,12 @@ export default class World {
       const response = new SAT.Response()
       const collidedGround = checkCollided(this.ground, creature, response);
 
+      creature.mayJump = false;
       if (collidedGround && response.overlap > 0) {
         if (collidedGround instanceof Ground) {
           creature.pos.y = collidedGround.pos.y - creature.model.h;
           creature.speed.y = 0;
+          creature.mayJump = true;
         }
 
         if (collidedGround instanceof GroundItem) {
@@ -110,9 +111,10 @@ export default class World {
           if (response.overlapN.y > 0) {
             creature.pos.y = collidedGround.pos.y - creature.model.h;
             creature.speed.y = 0;
+            creature.mayJump = true;
           }
           if (response.overlapN.y < 0) {
-            creature.speed.y = -1;
+            creature.speed.y = 0;
             creature.pos.y = collidedGround.pos.y + collidedGround.model.h;
           }
         }
