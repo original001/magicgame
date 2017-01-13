@@ -5,16 +5,17 @@ import {createSpell} from './spell.js';
 export default class Creature extends GravityObject {
   enabledSpells = [];
   isSpellWorking = false;
-  movespeed = new SAT.Vector(5.1, 300);
+  movespeed = new SAT.Vector(200, 300);
   move(dir) {
     switch (dir) {
       case 'forward':
-        this.right(this.movespeed.x);
+        this.speed.x = this.movespeed.x
         break;
       case 'back':
-        this.left(this.movespeed.x);
+        this.speed.x = -this.movespeed.x
         break;
       case 'up':
+        // this.speed.y = this.movespeed.y;
         this.jump(this.movespeed.y);
         break;
     }
