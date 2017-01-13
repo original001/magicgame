@@ -1,4 +1,5 @@
 import WorldObject from './base.js';
+import SAT from 'sat';
 
 export const BOLT = 1;
 export const TELEPORT = 2;
@@ -14,16 +15,18 @@ export default class Spell extends WorldObject {
 }
 
 export const createSpell = (source, type) => {
-  let spell;
+  let spell = new Spell(0, 0, 0, 0, 'black');
+  let _resolve;
+  const promise = new Promise(resolve => {
+    _resolve = resolve;
+  })
+  spell.promise = promise;
+  const speed = 200 * source.direction;
   switch (type) {
     case BOLT:
-      let _resolve;
-      const promise = new Promise(resolve => {
-        _resolve = resolve;
-      })
-      spell = new Spell(source.pos.x + source.model.w/2, source.pos.y + 10, 5, 5, 'blue');
-      spell.promise = promise;
-      const speed = 200 * source.direction;
+      spell.pos = new SAT.Vector(source.pos.x + source.model.w/2, source.pos.y + 10);
+      spell.model = new SAT.Box(spell.pos, 5, 5);
+      spell.color = 'blue';
       spell.update = function(tick) {
         if (this.startTime > 1) {
           _resolve();
@@ -32,8 +35,8 @@ export const createSpell = (source, type) => {
         this.startTime += tick;
       }
       spell.collide = function(target) {
-        _resolve();
         target.dead();
+        _resolve();
       }
       break;
     case TELEPORT:
