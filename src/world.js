@@ -8,6 +8,18 @@ import * as Spell from './spell.js';
 
 const key = new Key();
 
+const checkCollided = (objects, subject, response) => {
+  let collidedObject = null;
+  objects.some(obj => {
+    const collided = SAT.testPolygonPolygon(subject.model.toPolygon(), obj.model.toPolygon(), response);
+    if (collided) {
+      collidedObject = obj;
+    }
+    return collided;
+  }) 
+  return collidedObject;
+}
+
 export default class World {
   constructor(screen) {
     this.world = new WorldObject(0, 0, canvas.offsetWidth, canvas.offsetHeight, '#abd5fc')
@@ -57,16 +69,10 @@ export default class World {
 
   collision(tick) {
     const response = new SAT.Response();  
-    let collidedEnemy;
-    const collidedWithEnemy = this.enemies.some(enemy => {
-      const collided = SAT.testPolygonPolygon(this.player.model.toPolygon(), enemy.model.toPolygon(), response);
-      if (collided) {
-        collidedEnemy = enemy;
-      }
-      return collided;
-    }) 
 
-    if (collidedWithEnemy) {
+    const collidedEnemy = checkCollided(this.enemies, this.player, response);
+
+    if (collidedEnemy) {
       if (Math.abs(response.overlapN.x) > 0) {
         this.player.dead();
       } else {
@@ -77,19 +83,12 @@ export default class World {
 
     const creatures = [this.player, ...this.enemies];
     creatures.forEach(creature => {
-      let collidedGround;
-      let response = new SAT.Response()
-      const playerOnGround = this.ground.some(ground => {
-         const collided = SAT.testPolygonPolygon(creature.model.toPolygon(), ground.model.toPolygon(), response);
-         if (collided) {
-          collidedGround = ground;
-         }
-         return collided;
-      });
+      const response = new SAT.Response()
+      const collidedGround = checkCollided(this.ground, creature, response);
 
       creature.gravity(tick);
 
-      if (playerOnGround && response.overlap > 0) {
+      if (collidedGround && response.overlap > 0) {
         if (collidedGround instanceof Ground) {
           creature.pos.y = collidedGround.pos.y - creature.model.h;
           creature.speed = 0;
@@ -115,30 +114,17 @@ export default class World {
     })
 
     this.enemies.forEach(enemy => {
-      let collidedFire;
-      const collidedEnemy = this.friendlyFire.some(fire => {
-         const collided = SAT.testPolygonPolygon(enemy.model.toPolygon(), fire.model.toPolygon(), response);
-         if (collided) {
-          collidedFire = fire;
-         }
-         return collided;
-      });
+      const response = new SAT.Response()
+      const collidedFire = checkCollided(this.friendlyFire, enemy, response);
 
-      if (collidedEnemy) {
+      if (collidedFire) {
         collidedFire.collide(enemy, this.player);
       }
     })
 
-    let collidedFire;
-    const collidedPlayer = this.enemyFire.some(fire => {
-       const collided = SAT.testPolygonPolygon(this.player.model.toPolygon(), fire.model.toPolygon(), response);
-       if (collided) {
-        collidedFire = fire;
-       }
-       return collided;
-    });
+    const collidedFire = checkCollided(this.enemyFire, this.player, response)
 
-    if (collidedPlayer) {
+    if (collidedFire) {
       collidedFire.collide(this.player, this.enemies[0]);
     }
   }
