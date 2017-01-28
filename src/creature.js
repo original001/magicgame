@@ -14,14 +14,15 @@ export default class Creature extends WorldObject {
     switch (dir) {
       case 'forward':
         this.speed.x = this.movespeed.x
+        this.direction = 1;
         break;
       case 'back':
         this.speed.x = -this.movespeed.x
+        this.direction = -1;
         break;
       case 'up':
         if (!this.mayJump) return;
         this.speed.y = this.movespeed.y;
-        // this.jump(this.movespeed.y);
         break;
     }
   }
