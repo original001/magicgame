@@ -23,7 +23,6 @@ const checkCollided = (objects, subject, response) => {
 
 export default class World {
   constructor(screen) {
-    this.world = new WorldObject(0, 0, canvas.offsetWidth, canvas.offsetHeight, '#abd5fc')
     this.screen = screen;
     this._spendTime = 0;
 
@@ -139,8 +138,8 @@ export default class World {
   }
 
   fill() {
-    const {player, ground, enemies, world} = this;
-    this.screen.addElements([world, player, ...ground, ...enemies]);
+    const {player, ground, enemies} = this;
+    this.screen.addElements([player, ...ground, ...enemies], player.pos);
   }
 
   checkKeys() {
