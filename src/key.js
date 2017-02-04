@@ -4,6 +4,7 @@ export default class Key {
   static LEFT = 'KeyA';
   static UP = 'Space';
   static RIGHT = 'KeyD';
+  static FORCE = 'KeyE';
   static ONE = 'KeyY';
   static TWO = 'KeyU';
   static THREE = 'KeyI';

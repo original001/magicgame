@@ -21,7 +21,7 @@ export default class World {
 
   addCreatures() {
     this.player = new Player();
-    this.ground = [new Ground(), new GroundItem(200, 320, 100, 20), new GroundItem(150, 370, 10, 50)];
+    this.ground = [new Ground(), new GroundItem(200, 320, 100, 20), new GroundItem(150, 370, 10, 50), new GroundItem(0, 200, 50, 300)];
     this.enemies = [new MagicEnemy(1000, 350, spell.BOLT), new Enemy(370, 350), new Enemy(1400, 350)];
     this.spells = [];
   }
@@ -114,6 +114,9 @@ export default class World {
     }
     if (key.isDown(Key.UP)) {
       this.player.move('up');
+    }
+    if (key.isDown(Key.FORCE)) {
+      this.spell(this.player, spell.TAKE);
     }
     if (key.isDown(Key.ONE)) {
       this.spell(this.player, spell.BOLT);

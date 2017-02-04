@@ -28,9 +28,6 @@ export default class Creature extends WorldObject {
   dead() {
     this.pos.x = -100000
   }
-  collideSpell() {
-    this.dead(); 
-  }
   freeze() {
     this.frozen = true;
   }
