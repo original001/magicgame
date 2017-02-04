@@ -15,13 +15,10 @@ export default class Screen {
       const y = pos.y + this.center.y - playerPos.y;
       this.ctx.fillStyle = color;
       this.ctx.fillRect(x, y, model.w, model.h);
-      elem.children.forEach(child => {
-        const {pos, model, color} = child;
-        const x = pos.x + this.center.x - playerPos.x;
-        const y = pos.y + this.center.y - playerPos.y;
-        this.ctx.fillStyle = color;
-        this.ctx.fillRect(x, y, model.w, model.h);
-      })
+      if (elem.direction) {
+        this.ctx.fillStyle = 'black';
+        this.ctx.fillRect(x + model.w/2 + elem.direction * 5 - 2.5, y + 5, 5, 5);
+      }
     })
   }
 }
