@@ -31,9 +31,7 @@ class BoltSpell extends Spell {
   constructor(source) {
     const pos = new SAT.Vector(source.pos.x + source.model.w/2, source.pos.y + 10);
     const model = new SAT.Box(pos, 5, 5);
-    super(model.pos.x, model.pos.y, model.w, model.h);
-    this.model = model;
-    this.pos = pos;
+    super(model);
     this.speed = 400 * source.direction;
     this.color = 'blue';
     this.source = source;
@@ -54,33 +52,40 @@ class BoltSpell extends Spell {
   }
 }
 
+class TakeSpell extends Spell {
+  constructor(source) {
+    const pos = new SAT.Vector(source.pos.x + source.model.w/2, source.pos.y + 10);
+    const model = new SAT.Box(pos, 10, 10);
+    super(model);
+    this.speed = 400 * source.direction;
+    this.color = 'white';
+    this.source = source;
+  }
+  update(tick) {
+    if (this.startTime > 0.15) {
+      this._resolve();
+    }
+    this.model.w += tick * this.speed;
+    this.startTime += tick;
+  }
+  collide(target) {
+    if (target === this.source) return;
+    if (target.enabledSpells 
+        && this.source.enabledSpells 
+        && this.source.enabledSpells.indexOf(target.enabledSpells) === -1) {
+      this.source.enabledSpells = target.enabledSpells.concat(this.source.enabledSpells);
+      target.enabledSpells.splice(0, 1);
+    }
+    this._resolve();
+  }
+}
+
 export const createSpell = (source, type) => {
   switch (type) {
     case BOLT:
       return new BoltSpell(source);
-      break;
     case TAKE:
-      spell.pos = new SAT.Vector(source.pos.x + source.model.w/2, source.pos.y + 10);
-      spell.model = new SAT.Box(spell.pos, 10, 10);
-      spell.color = 'gray';
-      const startPos = spell.pos;
-      spell.update = function(tick) {
-        if (this.startTime > 0.15) {
-          _resolve();
-        }
-        this.model.w += tick * speed;
-        this.startTime += tick;
-      }
-      spell.collide = function(target) {
-        if (target === source) return;
-        if (target.enabledSpells && source.enabledSpells && source.enabledSpells.indexOf(target.enabledSpells) === -1) {
-          source.enabledSpells = target.enabledSpells.concat(source.enabledSpells);
-          target.enabledSpells.splice(0, 1);
-        }
-        _resolve();
-      }
-      break;
-
+      return new TakeSpell(source);
     case TELEPORT:
       spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'purple');
       spell.update = function(tick) {

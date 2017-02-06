@@ -1,14 +1,19 @@
 import WorldObject from './base.js';
+import SAT from 'sat';
+
+const satModel = (x, y, w, h) => {
+  return new SAT.Box(new SAT.Vector(x, y), w, h);
+}
 
 export class Ground extends WorldObject {
   constructor() {
-    super(-10000, canvas.offsetHeight - 100, 20000, 10000, '#ddd');
+    super(satModel(-10000, canvas.offsetHeight - 100, 20000, 10000), '#ddd');
   }
 }
 
 export class GroundItem extends WorldObject {
-  constructor(x, y, w, h) {
-    super(x, y, w, h, '#ddd')
+  constructor(model) {
+    super(model, '#ddd')
   }
   dead() {}
 }
