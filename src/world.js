@@ -4,7 +4,7 @@ import {Ground, GroundItem} from './ground.js';
 import Enemy, {MagicEnemy} from './enemy.js';
 import SAT from 'sat';
 import Key from './key';
-import Spell, * as spell from './spell.js';
+import * as spell from './spell.js';
 import {G} from './constants.js';
 
 const key = new Key();
@@ -22,7 +22,7 @@ export default class World {
   addCreatures() {
     this.player = new Player();
     this.ground = [new Ground(), new GroundItem(200, 320, 100, 20), new GroundItem(150, 370, 10, 50), new GroundItem(0, 200, 50, 300)];
-    this.enemies = [new MagicEnemy(1000, 350, spell.BOLT), new Enemy(370, 350), new Enemy(1400, 350)];
+    this.enemies = [new Enemy(1000, 350, spell.BOLT), new Enemy(370, 350), new Enemy(1400, 350)];
     this.spells = [];
   }
 
@@ -46,6 +46,7 @@ export default class World {
       creature.speed.x = 0;
       creature.pos.y = creature.pos.y - creature.speed.y * tick + G * tick * tick / 2; 
       creature.speed.y -= G;
+      creature.color = creature.enabledSpells[0] ? spell.colors[creature.enabledSpells[0]] : 'black';
     });
     this.spells.forEach(spell => {
       spell.update(tick);
@@ -88,13 +89,13 @@ export default class World {
     this.screen.addElements([player, ...ground, ...enemies, ...spells], player.pos);
   }
 
-  spell(creature, type) {
-    const isSpellEnabled = creature.enabledSpells.indexOf(type) !== -1;
+  spell(creature) {
+    const isSpellEnabled = creature.enabledSpells.length > 0;
     if (!isSpellEnabled || creature.isSpellWorking) return;
 
     creature.isSpellWorking = true;
 
-    const activeSpell = spell.createSpell(creature, type);
+    const activeSpell = spell.createSpell(creature, creature.enabledSpells[0]);
 
     this.spells.push(activeSpell);
 
@@ -103,6 +104,11 @@ export default class World {
       const ind = this.spells.indexOf(activeSpell);
       this.spells.splice(ind, 1);
     })
+  }
+
+  changeSpell(creature) {
+    const spells = creature.enabledSpells;
+    creature.enabledSpells = [...spells.slice(1), spells[0]];
   }
 
   checkKeys() {
@@ -116,7 +122,10 @@ export default class World {
       this.player.move('up');
     }
     if (key.isDown(Key.FORCE)) {
-      this.spell(this.player, spell.TAKE);
+      this.spell(this.player);
+    }
+    if (key.isDown(Key.CHANGE)) {
+      this.changeSpell(this.player);
     }
     if (key.isDown(Key.ONE)) {
       this.spell(this.player, spell.BOLT);
