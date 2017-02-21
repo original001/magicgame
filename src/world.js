@@ -4,25 +4,13 @@ import {Ground, GroundItem} from './ground.js';
 import Enemy, {MagicEnemy} from './enemy.js';
 import SAT from 'sat';
 import Key from './key';
-import * as Spell from './spell.js';
+import * as spell from './spell.js';
+import {G} from './constants.js';
 
 const key = new Key();
 
-const checkCollided = (objects, subject, response) => {
-  let collidedObject = null;
-  objects.some(obj => {
-    const collided = SAT.testPolygonPolygon(subject.model.toPolygon(), obj.model.toPolygon(), response);
-    if (collided) {
-      collidedObject = obj;
-    }
-    return collided;
-  }) 
-  return collidedObject;
-}
-
 export default class World {
   constructor(screen) {
-    this.world = new WorldObject(0, 0, canvas.offsetWidth, canvas.offsetHeight, '#abd5fc')
     this.screen = screen;
     this._spendTime = 0;
 
@@ -33,111 +21,94 @@ export default class World {
 
   addCreatures() {
     this.player = new Player();
-    this.ground = [new Ground(), new GroundItem(200, 320, 100, 20)];
-    this.enemies = [new MagicEnemy(300, 370, Spell.BOLT), new Enemy(370, 350)];
-    this.enemyFire = [];
-    this.friendlyFire = [];
+    this.ground = [new Ground(), new GroundItem(200, 320, 100, 20), new GroundItem(150, 370, 10, 50), new GroundItem(0, 200, 50, 300)];
+    this.enemies = [new Enemy(1000, 350, spell.BOLT), new Enemy(370, 350), new Enemy(1400, 350)];
+    this.spells = [];
   }
 
   update(time = 0) {
     const tick = (time - this._spendTime) / 1000;
     this._spendTime = time;
 
-    this.updateBounds(tick);
-    this.checkKeys();
-    this.collision(tick);
     this.moveEnemies(tick);
+    this.checkKeys();
+    this.updateObjects(tick);
+    this.collision(tick);
     this.fill();
     requestAnimationFrame(this.update.bind(this));
   }
 
-  updateBounds(tick) {
-    this.enemyFire.forEach(obj => obj.update(tick));
-    this.friendlyFire.forEach(obj => obj.update(tick));
+  updateObjects(tick) {
+    const creatures = [this.player].concat(this.enemies);
+    creatures.forEach(creature => {
+      if (creature.frozen) return;
+      creature.pos.x += creature.speed.x * tick;
+      creature.speed.x = 0;
+      creature.pos.y = creature.pos.y - creature.speed.y * tick + G * tick * tick / 2; 
+      creature.speed.y -= G;
+      creature.color = creature.enabledSpells[0] ? spell.colors[creature.enabledSpells[0]] : 'black';
+    });
+    this.spells.forEach(spell => {
+      spell.update(tick);
+    })
   }
 
   moveEnemies(tick) {
     this.enemies.forEach(enemy => {
-      this.makeSpell(Spell.BOLT, enemy);
+      this.spell(enemy, spell.BOLT);
       if (this.player.pos.x > enemy.pos.x) {
-        enemy.right(tick * 100);
-      } else {
-        enemy.left(tick * 100);
+        enemy.move('forward');
+      } else if (this.player.pos.x < enemy.pos.x) {
+        enemy.move('back');
       }
     });
   }
 
   collision(tick) {
-    const response = new SAT.Response();  
-
-    const collidedEnemy = checkCollided(this.enemies, this.player, response);
-
-    if (collidedEnemy) {
-      if (Math.abs(response.overlapN.x) > 0) {
-        this.player.dead();
-      } else {
-        collidedEnemy.dead();
-        this.player.enabledSpells = this.player.enabledSpells.concat(collidedEnemy.enabledSpells);
-      }
-    }
+    checkCollided(this.enemies, this.player, collideEnemy);
 
     const creatures = [this.player, ...this.enemies];
     creatures.forEach(creature => {
-      const response = new SAT.Response()
-      const collidedGround = checkCollided(this.ground, creature, response);
+      creature.mayJump = false;
+      checkCollided(this.ground, creature, collideGround);
 
-      creature.gravity(tick);
-
-      if (collidedGround && response.overlap > 0) {
-        if (collidedGround instanceof Ground) {
-          creature.pos.y = collidedGround.pos.y - creature.model.h;
-          creature.speed = 0;
-        }
-
-        if (collidedGround instanceof GroundItem) {
-          if (response.overlapN.x > 0) {
-            creature.pos.x = collidedGround.pos.x - creature.model.w;
-          }
-          if (response.overlapN.x < 0) {
-            creature.pos.x = collidedGround.pos.x + collidedGround.model.w;
-          }
-          if (response.overlapN.y > 0) {
-            creature.pos.y = collidedGround.pos.y - creature.model.h;
-            creature.speed = 0;
-          }
-          if (response.overlapN.y < 0) {
-            creature.speed = -1;
-            creature.pos.y = collidedGround.pos.y + collidedGround.model.h;
-          }
-        }
-      }
+      checkCollided(this.spells, creature, (spell, creature) => {
+        spell.collide(creature);
+      })
     })
 
-    this.enemies.forEach(enemy => {
-      const response = new SAT.Response()
-      const collidedFire = checkCollided(this.friendlyFire, enemy, response);
-
-      if (collidedFire) {
-        collidedFire.collide(enemy, this.player);
-      }
+    this.ground.forEach(ground => {
+      checkCollided(this.spells, ground, (spell, ground) => {
+        spell.collide(ground);
+      })
     })
-
-    const collidedFire = checkCollided(this.enemyFire, this.player, response)
-
-    if (collidedFire) {
-      collidedFire.collide(this.player, this.enemies[0]);
-    }
   }
 
   fill() {
-    const {player, ground, enemies, world, friendlyFire, enemyFire} = this;
-    this.screen.addElements([world, player, ...ground, ...enemies, ...friendlyFire, ...enemyFire]);
+    const {player, ground, enemies, spells} = this;
+    this.screen.addElements([player, ...ground, ...enemies, ...spells], player.pos);
   }
 
-  makeSpell(spelltype, source) {
-    const spell = Spell.createSpell(source, spelltype);
-    const to = source === this.player ? this.friendlyFire : this.enemyFire;
-    spell && to.push(spell);
+  spell(creature) {
+    const isSpellEnabled = creature.enabledSpells.length > 0;
+    if (!isSpellEnabled || creature.isSpellWorking) return;
+
+    creature.isSpellWorking = true;
+
+    const activeSpell = spell.createSpell(creature, creature.enabledSpells[0]);
+
+    this.spells.push(activeSpell);
+
+    activeSpell.promise.then(() => {
+      creature.isSpellWorking = false;
+      const ind = this.spells.indexOf(activeSpell);
+      this.spells.splice(ind, 1);
+    })
+  }
+
+  changeSpell(creature) {
+    const spells = creature.enabledSpells;
+    creature.enabledSpells = [...spells.slice(1), spells[0]];
   }
 
   checkKeys() {
@@ -150,29 +121,78 @@ export default class World {
     if (key.isDown(Key.UP)) {
       this.player.move('up');
     }
+    if (key.isDown(Key.FORCE)) {
+      this.spell(this.player);
+    }
+    if (key.isDown(Key.CHANGE)) {
+      this.changeSpell(this.player);
+    }
     if (key.isDown(Key.ONE)) {
-      this.makeSpell(Spell.BOLT, this.player);
+      this.spell(this.player, spell.BOLT);
     }
     if (key.isDown(Key.TWO)) {
-      const spell = Spell.createSpell(this.player, Spell.TELEPORT);
-      spell && this.friendlyFire.push(spell);
+      this.spell(this.player, spell.TELEPORT);
     }
     if (key.isDown(Key.THREE)) {
-      const spell = Spell.createSpell(this.player, Spell.FREEZE);
-      spell && this.friendlyFire.push(spell);
+      this.spell(this.player, spell.FREEZE);
     }
     if (key.isDown(Key.FOUR)) {
-      const spell = Spell.createSpell(this.player, Spell.KICK);
-      spell && this.friendlyFire.push(spell);
+      this.spell(this.player, spell.KICK);
     }
     if (key.isDown(Key.FIVE)) {
-      const spell = Spell.createSpell(this.player, Spell.FIRE);
-      spell && this.friendlyFire.push(spell);
+      this.spell(this.player, spell.FIRE);
     }
   }
 
   attachEvents() {
     document.addEventListener('keydown', (e) => key.onKeydown(e), false)
     document.addEventListener('keyup', (e) => key.onKeyup(e), false)
+  }
+}
+
+const checkCollided = (objects, subject, callback) => {
+  objects.forEach(obj => {
+    const responce = new SAT.Response();
+    const collided = SAT.testPolygonPolygon(subject.model.toPolygon(), obj.model.toPolygon(), responce);
+    if (collided) {
+      callback.call(null, obj, subject, responce);
+    }
+  }) 
+}
+
+const collideEnemy = (enemy, player, responce) => {
+  if (Math.abs(responce.overlapN.x) > 0) {
+    player.dead();
+  } else {
+    enemy.dead();
+    player.enabledSpells = player.enabledSpells.concat(enemy.enabledSpells);
+  }
+}
+
+const collideGround = (ground, creature, responce) => {
+  if (ground && responce.overlap > 0) {
+    if (ground instanceof Ground) {
+      creature.pos.y = ground.pos.y - creature.model.h;
+      creature.speed.y = 0;
+      creature.mayJump = true;
+    }
+
+    if (ground instanceof GroundItem) {
+      if (responce.overlapN.x > 0) {
+        creature.pos.x = ground.pos.x - creature.model.w;
+      }
+      if (responce.overlapN.x < 0) {
+        creature.pos.x = ground.pos.x + ground.model.w;
+      }
+      if (responce.overlapN.y > 0) {
+        creature.pos.y = ground.pos.y - creature.model.h;
+        creature.speed.y = 0;
+        creature.mayJump = true;
+      }
+      if (responce.overlapN.y < 0) {
+        creature.speed.y = 0;
+        creature.pos.y = ground.pos.y + ground.model.h;
+      }
+    }
   }
 }

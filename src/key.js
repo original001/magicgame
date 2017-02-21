@@ -4,11 +4,13 @@ export default class Key {
   static LEFT = 'KeyA';
   static UP = 'Space';
   static RIGHT = 'KeyD';
-  static ONE = 'Digit1';
-  static TWO = 'Digit2';
-  static THREE = 'Digit3';
-  static FOUR = 'Digit4';
-  static FIVE = 'Digit5';
+  static FORCE = 'KeyJ';
+  static CHANGE = 'KeyK';
+  static ONE = 'KeyY';
+  static TWO = 'KeyU';
+  static THREE = 'KeyI';
+  static FOUR = 'KeyO';
+  static FIVE = 'KeyP';
 
   isDown(keyCode) {
       return this._pressed[keyCode];
