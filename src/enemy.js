@@ -1,5 +1,5 @@
 import Creature from './creature.js';
-import {colors} from './spell.js';
+import {colors} from './spell/fabric.js';
 
 export default class Enemy extends Creature {
   constructor(x, y, spellType) {

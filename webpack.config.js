@@ -1,9 +1,12 @@
+const webpack = require('webpack');
+
 module.exports = {
   entry: './index.js',
   output: {
     filename: 'bundle.js'
   },
   module: {
+
     loaders: [{
       test: /\.js/,
       loader: 'babel',
@@ -11,5 +14,13 @@ module.exports = {
         presets: ['es2015', 'stage-0']
       }
     }]
-  }
-}
+  },
+  resolve: {
+    extensions: ['', '.js']
+  },
+  plugins: [
+    new webpack.ProvidePlugin({
+      SAT: 'sat'
+    })
+  ]
+};

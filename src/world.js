@@ -1,10 +1,9 @@
 import WorldObject from './base.js';
 import Player from './player.js';
 import {Ground, GroundItem} from './ground.js';
-import Enemy, {MagicEnemy} from './enemy.js';
-import SAT from 'sat';
+import Enemy from './enemy.js';
 import Key from './key';
-import * as spell from './spell.js';
+import * as spell from './spell/fabric.js';
 import {G} from './constants.js';
 
 const key = new Key();

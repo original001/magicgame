@@ -1,6 +1,6 @@
 import Creature from './creature.js';
 import WorldObject from './base.js';
-import * as Spells from './spell.js';
+import * as Spells from './spell/fabric.js';
 
 export default class Player extends Creature {
   constructor() {
