@@ -7,18 +7,19 @@ export default class TakeSpell extends Spell {
     super(model.pos.x, model.pos.y, model.w, model.h);
     this.model = model;
     this.pos = pos;
-    this.speed = 400 * source.direction;
+    this.speed.x = 400 * source.direction;
     this.color = 'gray';
     this.source = source;
+    this.init();
   }
-  /* ovveride */
-  update(tick) {
-    if (this.startTime > 0.15) {
-      this._resolve();
-    }
-    this.model.w += tick * this.speed;
-    this.startTime += tick;
+
+  init() {
+    setTimeout(() => {
+      this.active = false;
+      this.remove()
+    }, 150);
   }
+
   /* ovveride */
   collide(target) {
     const source = this.source;
@@ -27,6 +28,6 @@ export default class TakeSpell extends Spell {
       source.enabledSpells = target.enabledSpells.concat(source.enabledSpells);
       target.enabledSpells.splice(0, 1);
     }
-    this._resolve();
+    this.remove();
   }
 }

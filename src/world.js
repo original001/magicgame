@@ -3,10 +3,11 @@ import Player from './player.js';
 import {Ground, GroundItem} from './ground.js';
 import Enemy from './enemy.js';
 import Key from './key';
-import * as spell from './spell/fabric.js';
+import * as Spell from './spell/fabric.js';
 import {G} from './constants.js';
 
 const key = new Key();
+
 
 export default class World {
   constructor(screen) {
@@ -21,7 +22,7 @@ export default class World {
   addCreatures() {
     this.player = new Player();
     this.ground = [new Ground(), new GroundItem(200, 320, 100, 20), new GroundItem(150, 370, 10, 50), new GroundItem(0, 200, 50, 300)];
-    this.enemies = [new Enemy(1000, 350, spell.BOLT), new Enemy(370, 350), new Enemy(1400, 350)];
+    this.enemies = [new Enemy(1000, 350, Spell.BOLT), new Enemy(370, 350), new Enemy(1400, 350)];
     this.spells = [];
   }
 
@@ -29,13 +30,24 @@ export default class World {
     const tick = (time - this._spendTime) / 1000;
     this._spendTime = time;
 
-    this.moveEnemies(tick);
+    this.clean();
+    this.moveEnemies();
     this.checkKeys();
     this.updateObjects(tick);
-    this.collision(tick);
+    this.collision();
     this.fill();
     requestAnimationFrame(this.update.bind(this));
   }
+
+  clean() {
+    const {spells} = this;
+
+    const unused = spells.filter(obj => !obj.exist);
+
+    unused.forEach(elem => {
+      spells.splice(spells.indexOf(elem), 1);
+    })
+  };
 
   updateObjects(tick) {
     const creatures = [this.player].concat(this.enemies);
@@ -45,16 +57,16 @@ export default class World {
       creature.speed.x = 0;
       creature.pos.y = creature.pos.y - creature.speed.y * tick + G * tick * tick / 2; 
       creature.speed.y -= G;
-      creature.color = creature.enabledSpells[0] ? spell.colors[creature.enabledSpells[0]] : 'black';
+      creature.color = creature.enabledSpells[0] ? Spell.colors[creature.enabledSpells[0]] : 'black';
     });
     this.spells.forEach(spell => {
-      spell.update(tick);
+      spell.pos.x += spell.speed.x * tick;
     })
   }
 
-  moveEnemies(tick) {
+  moveEnemies() {
     this.enemies.forEach(enemy => {
-      this.spell(enemy, spell.BOLT);
+      this.spell(enemy, Spell.BOLT);
       if (this.player.pos.x > enemy.pos.x) {
         enemy.move('forward');
       } else if (this.player.pos.x < enemy.pos.x) {
@@ -63,7 +75,7 @@ export default class World {
     });
   }
 
-  collision(tick) {
+  collision() {
     checkCollided(this.enemies, this.player, collideEnemy);
 
     const creatures = [this.player, ...this.enemies];
@@ -89,25 +101,11 @@ export default class World {
   }
 
   spell(creature) {
-    const isSpellEnabled = creature.enabledSpells.length > 0;
-    if (!isSpellEnabled || creature.isSpellWorking) return;
+    const spell = Spell.createSpell(creature);
 
-    creature.isSpellWorking = true;
-
-    const activeSpell = spell.createSpell(creature, creature.enabledSpells[0]);
-
-    this.spells.push(activeSpell);
-
-    activeSpell.promise.then(() => {
-      creature.isSpellWorking = false;
-      const ind = this.spells.indexOf(activeSpell);
-      this.spells.splice(ind, 1);
-    })
-  }
-
-  changeSpell(creature) {
-    const spells = creature.enabledSpells;
-    creature.enabledSpells = [...spells.slice(1), spells[0]];
+    if (spell) {
+      this.spells.push(spell);
+    }
   }
 
   checkKeys() {
@@ -124,22 +122,7 @@ export default class World {
       this.spell(this.player);
     }
     if (key.isDown(Key.CHANGE)) {
-      this.changeSpell(this.player);
-    }
-    if (key.isDown(Key.ONE)) {
-      this.spell(this.player, spell.BOLT);
-    }
-    if (key.isDown(Key.TWO)) {
-      this.spell(this.player, spell.TELEPORT);
-    }
-    if (key.isDown(Key.THREE)) {
-      this.spell(this.player, spell.FREEZE);
-    }
-    if (key.isDown(Key.FOUR)) {
-      this.spell(this.player, spell.KICK);
-    }
-    if (key.isDown(Key.FIVE)) {
-      this.spell(this.player, spell.FIRE);
+      this.player.changeSpell();
     }
   }
 

@@ -10,5 +10,4 @@ export class GroundItem extends WorldObject {
   constructor(x, y, w, h) {
     super(x, y, w, h, '#ddd')
   }
-  dead() {}
 }

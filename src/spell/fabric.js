@@ -14,14 +14,22 @@ export const colors = {
   [TAKE]: 'white',
 };
 
-export const createSpell = (source, type) => {
+export const createSpell = (source) => {
+  if (source.enabledSpells.length === 0 || (source.currentSpell && source.currentSpell.active)) {
+    return null;
+  }
+
+  const type = source.enabledSpells[0];
+
+  let spell = null;
+
   switch (type) {
     case BOLT:
-      return new BoltSpell(source);
-
+      spell = new BoltSpell(source);
+      break;
     case TAKE:
-      return new TakeSpell(source);
-
+      spell = new TakeSpell(source);
+      break;
     case TELEPORT:
       spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'purple');
       spell.update = function(tick) {
@@ -66,5 +74,7 @@ export const createSpell = (source, type) => {
     default:
       throw new Error('Unknown spell')
   }
+  source.currentSpell = spell;
+
   return spell;
 }

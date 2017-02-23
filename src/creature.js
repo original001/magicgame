@@ -6,7 +6,6 @@ export default class Creature extends WorldObject {
   frozen = false;
   direction = 1;
   enabledSpells = [];
-  isSpellWorking = false;
   mayJump = false;
   movespeed = new SAT.Vector(200, 300);
   move(dir) {

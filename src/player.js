@@ -7,4 +7,9 @@ export default class Player extends Creature {
     super(100, 350, 20, 30, 'white');
     this.enabledSpells = [Spells.TAKE]
   }
+
+  changeSpell() {
+    const spells = this.enabledSpells;
+    this.enabledSpells = [...spells.slice(1), spells[0]];
+  }
 }

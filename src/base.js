@@ -5,7 +5,15 @@ export default class WorldObject {
     this.pos = new SAT.Vector(x, y);
     this.model = new SAT.Box(this.pos, w, h);
     this.color = color || '#ddd';
-    this.children = []
+    this._exist = true;
+  }
+  
+  get exist() {
+    return this._exist;
+  }
+
+  remove() {
+    this._exist = false;
   }
 }
 
