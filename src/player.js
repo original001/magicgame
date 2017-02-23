@@ -5,11 +5,18 @@ import * as Spells from './spell/fabric.js';
 export default class Player extends Creature {
   constructor() {
     super(100, 350, 20, 30, 'white');
-    this.enabledSpells = [Spells.TAKE]
+    this.enabledSpells = [Spells.TAKE, Spells.BOLT]
   }
 
   changeSpell() {
+    //todo: lodash debounce
+    if (this.timeout) return;
+
     const spells = this.enabledSpells;
     this.enabledSpells = [...spells.slice(1), spells[0]];
+
+    this.timeout = setTimeout(() => {
+      this.timeout = null
+    }, 200);
   }
 }
