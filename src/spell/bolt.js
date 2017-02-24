@@ -5,9 +5,7 @@ export default class BoltSpell extends Spell {
   constructor(source) {
     const pos = new SAT.Vector(source.pos.x + source.model.w/2, source.pos.y + 10);
     const model = new SAT.Box(pos, 5, 5);
-    super(model.pos.x, model.pos.y, model.w, model.h);
-    this.model = model;
-    this.pos = pos;
+    super(model);
     this.speed.x = 400 * source.direction;
     this.color = 'blue';
     this.source = source;

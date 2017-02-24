@@ -4,8 +4,10 @@ import * as Spells from './spell/fabric.js';
 
 export default class Player extends Creature {
   constructor() {
-    super(100, 350, 20, 30, 'white');
-    this.enabledSpells = [Spells.TAKE, Spells.BOLT]
+    const pos = new SAT.Vector(100, 350);
+    const model = new SAT.Box(pos, 20, 30);
+    super(model, 'white');
+    this.enabledSpells = [Spells.TAKE]
   }
 
   changeSpell() {

@@ -8,6 +8,13 @@ import {G} from './constants.js';
 
 const key = new Key();
 
+const satModel = (x, y, w, h) => {
+  return new SAT.Box(new SAT.Vector(x, y), w, h);
+}
+
+const satPos = (x, y) => {
+  return new SAT.Vector(x, y);
+}
 
 export default class World {
   constructor(screen) {
@@ -21,8 +28,13 @@ export default class World {
 
   addCreatures() {
     this.player = new Player();
-    this.ground = [new Ground(), new GroundItem(200, 320, 100, 20), new GroundItem(150, 370, 10, 50), new GroundItem(0, 200, 50, 300)];
-    this.enemies = [new Enemy(1000, 350, Spell.BOLT), new Enemy(370, 350), new Enemy(1400, 350)];
+    this.ground = [
+      new Ground(),
+      new GroundItem(satModel(200, 320, 100, 20)),
+      new GroundItem(satModel(150, 370, 10, 50)),
+      new GroundItem(satModel(0, 200, 50, 300))
+    ];
+    this.enemies = [new Enemy(satPos(1000, 350), Spell.BOLT), new Enemy(satPos(370, 350)), new Enemy(satPos(1400, 350))];
     this.spells = [];
   }
 
