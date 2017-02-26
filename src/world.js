@@ -46,8 +46,9 @@ const initObjects = (data, textureId) => {
 const textureMap = {
   groundItem: 104,
   ground: 30,
-  player: 214,
-  enemy: 160
+  grass: 46,
+  player: 160,
+  enemy: 214
 }
 
 export default class World {
@@ -62,16 +63,11 @@ export default class World {
 
   addCreatures() {
     const parsedData = parseData(data);
-    this.player = new Player();
-    this.ground = initObjects(parsedData, textureMap.ground).concat(initObjects(parsedData, textureMap.groundItem))
-    // this.ground = [
-    //   new Ground(),
-    //   new GroundItem(satModel(200, 320, 100, 20)),
-    //   new GroundItem(satModel(150, 370, 10, 50)),
-    //   new GroundItem(satModel(0, 200, 50, 300))
-    // ];
-    // this.enemies = [new Enemy(satPos(1000, 350), Spell.BOLT), new Enemy(satPos(370, 350)), new Enemy(satPos(1400, 350))];
-    this.enemies = [];
+    this.player = initObjects(parsedData, textureMap.player)[0];
+    this.ground = initObjects(parsedData, textureMap.ground)
+                    .concat(initObjects(parsedData, textureMap.groundItem))
+                    .concat(initObjects(parsedData, textureMap.grass));
+    this.enemies = initObjects(parsedData, textureMap.enemy);
     this.spells = [];
   }
 

@@ -2,8 +2,7 @@ import Creature from './creature.js';
 import {colors} from './spell/fabric.js';
 
 export default class Enemy extends Creature {
-  constructor(pos, spellType) {
-    const model = new SAT.Box(pos, 20, 30);
+  constructor(model, spellType) {
     super(model, 'black');
     this.enabledSpells = spellType ? [spellType]: [];
     this.movespeed.x = 80;
