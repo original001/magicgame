@@ -6,6 +6,7 @@ export default class WorldObject {
     this.model = model;
     this.color = color || '#ddd';
     this._exist = true;
+    this.textureId = -1;
   }
   
   get exist() {

@@ -5,6 +5,8 @@ import Enemy from './enemy.js';
 import Key from './key';
 import * as Spell from './spell/fabric.js';
 import {G} from './constants.js';
+import data from '../maps/map.json';
+import {createObjectByTexId} from "./fabric.js";
 
 const key = new Key();
 
@@ -14,6 +16,38 @@ const satModel = (x, y, w, h) => {
 
 const satPos = (x, y) => {
   return new SAT.Vector(x, y);
+}
+
+const parseData = (data) => {
+  const {tileheight, tilewidth, layers, height, width} = data;
+  const dots = layers[0].data;
+  const coords = dots.map((dot, ind) => {
+    if (dot === 0) {
+      return null;
+    }
+    const a = ind / width;
+    const rows =  Math.floor(a);
+    const y = rows;
+    const x = ind - rows * width;
+    return dot !== 0 ? {[dot - 1]: satModel(x * tilewidth, y * tileheight, tilewidth, tileheight)} : null
+  }).filter(dot => !!dot);
+
+  return coords;
+}
+
+const initObjects = (data, textureId) => {
+  return data.filter(coord => {
+    return coord.hasOwnProperty(textureId)
+  }).map(coord => {
+    return createObjectByTexId(textureId, coord[textureId]);
+  })
+}
+
+const textureMap = {
+  groundItem: 104,
+  ground: 30,
+  player: 214,
+  enemy: 160
 }
 
 export default class World {
@@ -27,14 +61,17 @@ export default class World {
   }
 
   addCreatures() {
+    const parsedData = parseData(data);
     this.player = new Player();
-    this.ground = [
-      new Ground(),
-      new GroundItem(satModel(200, 320, 100, 20)),
-      new GroundItem(satModel(150, 370, 10, 50)),
-      new GroundItem(satModel(0, 200, 50, 300))
-    ];
-    this.enemies = [new Enemy(satPos(1000, 350), Spell.BOLT), new Enemy(satPos(370, 350)), new Enemy(satPos(1400, 350))];
+    this.ground = initObjects(parsedData, textureMap.ground).concat(initObjects(parsedData, textureMap.groundItem))
+    // this.ground = [
+    //   new Ground(),
+    //   new GroundItem(satModel(200, 320, 100, 20)),
+    //   new GroundItem(satModel(150, 370, 10, 50)),
+    //   new GroundItem(satModel(0, 200, 50, 300))
+    // ];
+    // this.enemies = [new Enemy(satPos(1000, 350), Spell.BOLT), new Enemy(satPos(370, 350)), new Enemy(satPos(1400, 350))];
+    this.enemies = [];
     this.spells = [];
   }
 
