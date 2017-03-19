@@ -3,9 +3,14 @@ import WorldObject from './base.js';
 import * as Spells from './spell/fabric.js';
 
 export default class Player extends Creature {
+  textureIdsLeft= [145, 146]
+  textureIdsRight = [161, 162]
+  textureIdRight = 160
+  textureIdLeft = 144
+  enabledSpells = [Spells.TAKE]
+
   constructor(model) {
     super(model, 'white');
-    this.enabledSpells = [Spells.TAKE]
   }
 
   changeSpell() {

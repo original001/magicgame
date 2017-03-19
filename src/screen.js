@@ -23,10 +23,6 @@ export default class Screen {
       } else {
         this.ctx.fillRect(x, y, model.w, model.h);
       }
-      if (elem.direction) {
-        this.ctx.fillStyle = 'black';
-        this.ctx.fillRect(x + model.w/2 + elem.direction * 5 - 2.5, y + 5, 5, 5);
-      }
     })
   }
 }

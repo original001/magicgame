@@ -160,6 +160,10 @@ export default class World {
     if (key.isDown(Key.LEFT)) {
       this.player.move('back');
     }
+    if (!key.isDown(Key.LEFT) && !key.isDown(Key.RIGHT)) {
+      this.player.move('stop');
+    }
+
     if (key.isDown(Key.UP)) {
       this.player.move('up');
     }

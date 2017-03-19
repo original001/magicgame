@@ -2,6 +2,9 @@ import Creature from './creature.js';
 import {colors} from './spell/fabric.js';
 
 export default class Enemy extends Creature {
+  textureIdsLeft= [214, 214, 215, 215]
+  textureIdsRight = [230, 230, 231, 231]
+
   constructor(model, spellType) {
     super(model, 'black');
     this.enabledSpells = spellType ? [spellType]: [];
