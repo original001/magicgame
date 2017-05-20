@@ -6,50 +6,11 @@ import Key from './key';
 import * as Spell from './spell/fabric.js';
 import {G} from './constants.js';
 import data from '../maps/map.json';
-import {createObjectByTexId} from "./fabric.js";
+import {createObjectByTexId, textureMap, initObjects} from "./fabric.js";
+import {checkCollided, collideEnemy, collideGround} from './collides.js';
+import {parseData} from './parseData.js';
 
 const key = new Key();
-
-const satModel = (x, y, w, h) => {
-  return new SAT.Box(new SAT.Vector(x, y), w, h);
-}
-
-const satPos = (x, y) => {
-  return new SAT.Vector(x, y);
-}
-
-const parseData = (data) => {
-  const {tileheight, tilewidth, layers, height, width} = data;
-  const dots = layers[0].data;
-  const coords = dots.map((dot, ind) => {
-    if (dot === 0) {
-      return null;
-    }
-    const a = ind / width;
-    const rows =  Math.floor(a);
-    const y = rows;
-    const x = ind - rows * width;
-    return dot !== 0 ? {[dot - 1]: satModel(x * tilewidth, y * tileheight, tilewidth, tileheight)} : null
-  }).filter(dot => !!dot);
-
-  return coords;
-}
-
-const initObjects = (data, textureId) => {
-  return data.filter(coord => {
-    return coord.hasOwnProperty(textureId)
-  }).map(coord => {
-    return createObjectByTexId(textureId, coord[textureId]);
-  })
-}
-
-const textureMap = {
-  groundItem: 104,
-  ground: 30,
-  grass: 46,
-  player: 160,
-  enemy: 214
-}
 
 export default class World {
   constructor(screen) {
@@ -100,7 +61,7 @@ export default class World {
       if (creature.frozen) return;
       creature.pos.x += creature.speed.x * tick;
       creature.speed.x = 0;
-      creature.pos.y = creature.pos.y - creature.speed.y * tick + G * tick * tick / 2; 
+      creature.pos.y = creature.pos.y - creature.speed.y * tick + G * tick * tick / 2;
       creature.speed.y -= G;
       creature.color = creature.enabledSpells[0] ? Spell.colors[creature.enabledSpells[0]] : 'black';
     });
@@ -178,52 +139,5 @@ export default class World {
   attachEvents() {
     document.addEventListener('keydown', (e) => key.onKeydown(e), false)
     document.addEventListener('keyup', (e) => key.onKeyup(e), false)
-  }
-}
-
-const checkCollided = (objects, subject, callback) => {
-  objects.forEach(obj => {
-    const responce = new SAT.Response();
-    const collided = SAT.testPolygonPolygon(subject.model.toPolygon(), obj.model.toPolygon(), responce);
-    if (collided) {
-      callback.call(null, obj, subject, responce);
-    }
-  }) 
-}
-
-const collideEnemy = (enemy, player, responce) => {
-  if (Math.abs(responce.overlapN.x) > 0) {
-    player.dead();
-  } else {
-    enemy.dead();
-    player.enabledSpells = player.enabledSpells.concat(enemy.enabledSpells);
-  }
-}
-
-const collideGround = (ground, creature, responce) => {
-  if (ground && responce.overlap > 0) {
-    if (ground instanceof Ground) {
-      creature.pos.y = ground.pos.y - creature.model.h;
-      creature.speed.y = 0;
-      creature.mayJump = true;
-    }
-
-    if (ground instanceof GroundItem) {
-      if (responce.overlapN.x > 0) {
-        creature.pos.x = ground.pos.x - creature.model.w;
-      }
-      if (responce.overlapN.x < 0) {
-        creature.pos.x = ground.pos.x + ground.model.w;
-      }
-      if (responce.overlapN.y > 0) {
-        creature.pos.y = ground.pos.y - creature.model.h;
-        creature.speed.y = 0;
-        creature.mayJump = true;
-      }
-      if (responce.overlapN.y < 0) {
-        creature.speed.y = 0;
-        creature.pos.y = ground.pos.y + ground.model.h;
-      }
-    }
   }
 }
