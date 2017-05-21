@@ -1,18 +1,25 @@
-import WorldObject from './base.js';
-import Player from './player.js';
-import {Ground, GroundItem} from './ground.js';
-import Enemy from './enemy.js';
+import WorldObject from './base';
+import Player from './player';
+import {Ground, GroundItem} from './ground';
+import Enemy from './enemy';
 import Key from './key';
-import * as Spell from './spell/fabric.js';
-import {G} from './constants.js';
+import * as Spell from './spell/fabric';
+import {G} from './constants';
 import data from '../maps/map.json';
-import {createObjectByTexId, textureMap, initObjects} from "./fabric.js";
-import {checkCollided, collideEnemy, collideGround} from './collides.js';
-import {parseData} from './parseData.js';
+import {createObjectByTexId, textureMap, initObjects} from "./fabric";
+import {checkCollided, collideEnemy, collideGround} from './collides';
+import {parseData} from './parseData';
 
 const key = new Key();
 
 export default class World {
+  screen: Screen;
+  _spendTime: number;
+  player: Player;
+  ground: Ground[];
+  enemies: Enemy[];
+  spells: Array<any>;
+
   constructor(screen) {
     this.screen = screen;
     this._spendTime = 0;

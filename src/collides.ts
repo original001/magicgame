@@ -1,5 +1,5 @@
 import SAT from 'sat';
-import {Ground, GroundItem} from './ground.js';
+import {Ground, GroundItem} from './ground';
 
 export const checkCollided = (objects, subject, callback) => {
   objects.forEach(obj => {

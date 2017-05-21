@@ -1,6 +1,6 @@
 import Spell from './spell';
-import BoltSpell from './bolt.js';
-import TakeSpell from './take.js';
+import BoltSpell from './bolt';
+import TakeSpell from './take';
 
 export const BOLT = 1;
 export const TELEPORT = 2;

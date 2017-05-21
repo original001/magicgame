@@ -1,4 +1,4 @@
-import {satModel, satPos} from "./satHelpers.js";
+import {satModel, satPos} from "./satHelpers";
 
 export const parseData = (data) => {
   const {tileheight, tilewidth, layers, height, width} = data;

@@ -1,4 +1,4 @@
-import WorldObject from './../base.js';
+import WorldObject from './../base';
 
 export default class Spell extends WorldObject {
   speed = new SAT.Vector(0, 0);

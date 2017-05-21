@@ -2,7 +2,7 @@ import Creature from '../src/creature';
 import SAT from 'sat';
 import {satModel} from '../src/satHelpers';
 import {checkCollided, collideGround, collideEnemy} from '../src/collides';
-import {Ground, GroundItem} from '../src/ground.js'
+import {Ground, GroundItem} from '../src/ground'
 import Player from '../src/player';
 import Enemy from '../src/enemy';
 

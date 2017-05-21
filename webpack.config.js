@@ -1,13 +1,16 @@
 const webpack = require('webpack');
 
 module.exports = {
-  entry: './index.js',
+  entry: './index',
   output: {
     filename: 'bundle.js'
   },
   module: {
-
-    loaders: [{
+    loaders: [
+    {
+      test: /\.ts/,
+      loader: 'babel?presets[]=es2015!ts-loader',
+    },{
       test: /\.js/,
       loader: 'babel',
       query: {
@@ -19,11 +22,6 @@ module.exports = {
     }]
   },
   resolve: {
-    extensions: ['', '.js']
+    extensions: ['', '.js', '.ts']
   },
-  plugins: [
-    new webpack.ProvidePlugin({
-      SAT: 'sat'
-    })
-  ]
 };

@@ -54,11 +54,11 @@ class World {
   }
 }
 
---- base.js ---
+--- base.ts ---
 updateObjects(objects) {
   objects.forEach(obj.splice(unusedIndex))
   objects.forEach(obj.pos.x++)
 }
 
---- collides.js ---
+--- collides.ts ---
 afterCollidePlayerAndEnemy = (player, enemy)

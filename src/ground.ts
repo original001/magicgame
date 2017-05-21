@@ -1,6 +1,6 @@
-import WorldObject from './base.js';
+import WorldObject from './base';
 import SAT from 'sat';
-import {satModel} from './satHelpers.js';
+import {satModel} from './satHelpers';
 
 export class Ground extends WorldObject {
   constructor() {

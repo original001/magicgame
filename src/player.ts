@@ -1,6 +1,6 @@
-import Creature from './creature.js';
-import WorldObject from './base.js';
-import * as Spells from './spell/fabric.js';
+import Creature from './creature';
+import WorldObject from './base';
+import * as Spells from './spell/fabric';
 
 export default class Player extends Creature {
   textureIdsLeft= [145, 146]

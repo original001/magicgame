@@ -1,4 +1,4 @@
-import WorldObject from './base.js';
+import WorldObject from './base';
 import SAT from 'sat';
 
 export default class Creature extends WorldObject {

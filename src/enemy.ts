@@ -1,5 +1,5 @@
-import Creature from './creature.js';
-import {colors} from './spell/fabric.js';
+import Creature from './creature';
+import {colors} from './spell/fabric';
 
 export default class Enemy extends Creature {
   textureIdsLeft= [214, 214, 215, 215]

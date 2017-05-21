@@ -1,6 +1,6 @@
-import {GroundItem} from './ground.js';
-import Player from './player.js';
-import Enemy from './enemy.js';
+import {GroundItem} from './ground';
+import Player from './player';
+import Enemy from './enemy';
 
 export const initObjects = (data, textureId) => {
   return data.filter(coord => {
