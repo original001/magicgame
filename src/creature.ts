@@ -1,5 +1,7 @@
 import WorldObject from './base';
 import SAT from 'sat';
+import {createSpell} from './spell/fabric';
+import {MovementMode} from './base';
 
 export default class Creature extends WorldObject {
   speed = new SAT.Vector(0, 0);
@@ -8,6 +10,8 @@ export default class Creature extends WorldObject {
   enabledSpells = [];
   mayJump = false;
   movespeed = new SAT.Vector(200, 300);
+  movementMode = MovementMode.Accelerate;
+  private timer: number;
   move(dir) {
     switch (dir) {
       case 'forward':
@@ -37,6 +41,13 @@ export default class Creature extends WorldObject {
   }
   freeze() {
     this.frozen = true;
+  }
+  createSpell() {
+    const spell = createSpell(this);
+
+    if (spell) {
+      this.children.push(spell);
+    }
   }
 
   setAnimations() {

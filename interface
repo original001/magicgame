@@ -1,15 +1,14 @@
+class Painter {
+  constructor(canvas: DOMElement)
+  drawElements(elements: WorldObject[])
+}
+
 class Browser {
-  listeners = {
-    move: [],
-    jump: [],
-    ...
-  }
-  onMove(cb) {
-    moveListeners.push(cb)
-  }
+  canvas: DOMElement;
+  keyboard: Key;
   dispatch(actions)
   attachEvents() {
-    dom.addEventListener(..., () => dispatch(listeners.move))
+    canvas.addEventListener(..., keyboard.keyPress(e))
   }
 }
 
@@ -18,10 +17,14 @@ class Game {
   world: World;
   player: Player;
 
-  attachEvents() {
-    browser.onMove(player.move)
-    browser.onJump(player.jump)
-    browser.onPause(this.pause)
+  constructor() {
+    browser = new Browser();
+    player = new Player(0,0)
+    new World(player, new Painter(browser.canvas), this.checkKeys)
+  }
+
+  checkKeys {
+    //keyboard checks;
   }
 
   start();
@@ -32,7 +35,7 @@ class World {
   player: Player;
   enemies: Enemy[];
 
-  constructor(player) {
+  constructor(player, painter) {
     player.obj = Phisic(100, 100, 10, 10, '')
   }
 
@@ -60,5 +63,14 @@ updateObjects(objects) {
   objects.forEach(obj.pos.x++)
 }
 
+
 --- collides.ts ---
 afterCollidePlayerAndEnemy = (player, enemy)
+
+-- base.ts --
+
+class WorldObject {
+  constructor() {
+    world.push()
+  }
+}

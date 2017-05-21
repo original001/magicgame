@@ -2,16 +2,18 @@ import Spell from './spell';
 import BoltSpell from './bolt';
 import TakeSpell from './take';
 
-export const BOLT = 1;
-export const TELEPORT = 2;
-export const FREEZE = 3;
-export const KICK = 4;
-export const FIRE = 5;
-export const TAKE = 6;
+export enum SpellType {
+  BOLT,
+  TELEPORT,
+  FREEZE,
+  KICK,
+  FIRE,
+  TAKE,
+}
 
 export const colors = {
-  [BOLT]: 'blue',
-  [TAKE]: 'white',
+  [SpellType.BOLT]: 'blue',
+  [SpellType.TAKE]: 'white',
 };
 
 export const createSpell = (source) => {
@@ -24,13 +26,13 @@ export const createSpell = (source) => {
   let spell = null;
 
   switch (type) {
-    case BOLT:
+    case SpellType.BOLT:
       spell = new BoltSpell(source);
       break;
-    case TAKE:
+    case SpellType.TAKE:
       spell = new TakeSpell(source);
       break;
-    case TELEPORT:
+    case SpellType.TELEPORT:
       spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'purple');
       spell.update = function(tick) {
         this.pos.x += tick * 100 * source.direction;
@@ -41,7 +43,7 @@ export const createSpell = (source) => {
         player.pos.x = targetPos;
       }
       break;
-    case FREEZE:
+    case SpellType.FREEZE:
       spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'green');
       spell.update = function(tick) {
         this.pos.x += tick * 100 * source.direction;
@@ -50,7 +52,7 @@ export const createSpell = (source) => {
         target.freeze();
       }
       break;
-    case KICK:
+    case SpellType.KICK:
       spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'red');
       spell.update = function(tick) {
         this.pos.x += tick * 100 * source.direction;
@@ -59,7 +61,7 @@ export const createSpell = (source) => {
         target.jump(400);
       }
       break;
-    case FIRE:
+    case SpellType.FIRE:
       spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 20, 20, 'orange');
       spell.update = function(tick) {
         if (this.model.w == 0) return;

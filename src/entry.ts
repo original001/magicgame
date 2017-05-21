@@ -1,6 +1,3 @@
-import World from './world';
-import Screen from './screen';
+import Game from './game';
 
-const screen = new Screen(document.getElementById('canvas'));
-
-new World(screen);
+new Game();

@@ -8,6 +8,7 @@ export default class Player extends Creature {
   textureIdRight = 160
   textureIdLeft = 144
   enabledSpells = [Spells.TAKE]
+  private timeout: number;
 
   constructor(model) {
     super(model, 'white');

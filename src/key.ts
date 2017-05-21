@@ -1,4 +1,4 @@
-export default class Key {
+export class Key {
   _pressed = {};
 
   static LEFT = 'KeyA';
@@ -24,3 +24,5 @@ export default class Key {
       delete this._pressed[event.code];
   }
 };
+
+export const key = new Key();

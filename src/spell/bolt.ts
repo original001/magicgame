@@ -1,5 +1,7 @@
 import Spell from './spell';
 import Creature from './../creature';
+import SAT from 'sat';
+import {MovementMode} from './../base';
 
 export default class BoltSpell extends Spell {
   constructor(source) {
@@ -10,6 +12,7 @@ export default class BoltSpell extends Spell {
     this.color = 'blue';
     this.source = source;
     this.init();
+    this.movementMode = MovementMode.Linear;
   }
   init() {
     setTimeout(() => {
