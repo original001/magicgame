@@ -1,0 +1,64 @@
+class Browser {
+  listeners = {
+    move: [],
+    jump: [],
+    ...
+  }
+  onMove(cb) {
+    moveListeners.push(cb)
+  }
+  dispatch(actions)
+  attachEvents() {
+    dom.addEventListener(..., () => dispatch(listeners.move))
+  }
+}
+
+class Game {
+  browser: Browser;
+  world: World;
+  player: Player;
+
+  attachEvents() {
+    browser.onMove(player.move)
+    browser.onJump(player.jump)
+    browser.onPause(this.pause)
+  }
+
+  start();
+}
+
+class World {
+  painter: Painter;
+  player: Player;
+  enemies: Enemy[];
+
+  constructor(player) {
+    player.obj = Phisic(100, 100, 10, 10, '')
+  }
+
+  tick() {
+    const objects = [...]
+    collisions()
+    updateObjects(objects)
+    draw(objects)
+  }
+
+  collisions() {
+    checkCollided(this.enemy, players, afterCollidePlayerAndEnemy)
+    checkCollided(this.enemy, players, afterCollidePlayerAndEnemy)
+    checkCollided(this.enemy, players, afterCollidePlayerAndEnemy)
+  }
+
+  draw(objects) {
+    painter.draw(objects)
+  }
+}
+
+--- base.js ---
+updateObjects(objects) {
+  objects.forEach(obj.splice(unusedIndex))
+  objects.forEach(obj.pos.x++)
+}
+
+--- collides.js ---
+afterCollidePlayerAndEnemy = (player, enemy)

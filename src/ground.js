@@ -1,9 +1,6 @@
 import WorldObject from './base.js';
 import SAT from 'sat';
-
-const satModel = (x, y, w, h) => {
-  return new SAT.Box(new SAT.Vector(x, y), w, h);
-}
+import {satModel} from './satHelpers.js';
 
 export class Ground extends WorldObject {
   constructor() {

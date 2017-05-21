@@ -46,9 +46,12 @@ export default class World {
   }
 
   clean() {
-    const {spells} = this;
+    const {spells, enemies} = this;
 
     const unused = spells.filter(obj => !obj.exist);
+    enemies.filter(obj => !obj.exist).forEach(elem => {
+      enemies.splice(enemies.indexOf(elem), 1)
+    })
 
     unused.forEach(elem => {
       spells.splice(spells.indexOf(elem), 1);

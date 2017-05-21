@@ -33,7 +33,7 @@ export default class Creature extends WorldObject {
     this.setAnimations();
   }
   dead() {
-    this.pos.x = -100000
+    this.remove()
   }
   freeze() {
     this.frozen = true;
