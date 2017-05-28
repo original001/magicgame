@@ -2,6 +2,7 @@ import WorldObject from './base';
 import Player from './player';
 import {Ground, GroundItem} from './ground';
 import Enemy from './enemy';
+import Creature from './creature';
 import {SpellType, colors, createSpell} from './spell/fabric';
 import data from '../maps/map.json';
 import {createObjectByTexId, textureMap, initObjects} from "./fabric";
@@ -21,18 +22,28 @@ export default class World {
     private painter: Painter,
     private onTick: () => void) {
     this._spendTime = 0;
-
+    this.spells = [];
     this.addCreatures();
     this.update();
   }
 
   addCreatures() {
     const parsedData = parseData(data);
-    this.player = initObjects(parsedData, textureMap.player)[0];
+    const player = initObjects(parsedData, textureMap.player)[0];
+    this.player.model = player.model;
+    this.player.pos = player.pos;
+
     this.ground = initObjects(parsedData, textureMap.ground)
                     .concat(initObjects(parsedData, textureMap.groundItem))
                     .concat(initObjects(parsedData, textureMap.grass));
     this.enemies = initObjects(parsedData, textureMap.enemy);
+  }
+
+  createSpell(creature: Creature) {
+    const spell = createSpell(creature);
+    if (spell) {
+      this.spells.push(spell);
+    }
   }
 
   update(time = 0) {
@@ -67,6 +78,7 @@ export default class World {
 
   moveEnemies() {
     this.enemies.forEach(enemy => {
+      this.createSpell(enemy);
       if (this.player.pos.x > enemy.pos.x) {
         enemy.move('forward');
       } else if (this.player.pos.x < enemy.pos.x) {

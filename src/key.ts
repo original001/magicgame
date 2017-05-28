@@ -24,5 +24,3 @@ export class Key {
       delete this._pressed[event.code];
   }
 };
-
-export const key = new Key();

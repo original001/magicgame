@@ -32,7 +32,7 @@ export default class Game {
       this.player.move('up');
     }
     if (key.isDown(Key.FORCE)) {
-      this.player.createSpell()
+      this.world.createSpell(this.player);
     }
     if (key.isDown(Key.CHANGE)) {
       this.player.changeSpell();

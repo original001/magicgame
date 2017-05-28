@@ -48,8 +48,6 @@ class World {
 
   collisions() {
     checkCollided(this.enemy, players, afterCollidePlayerAndEnemy)
-    checkCollided(this.enemy, players, afterCollidePlayerAndEnemy)
-    checkCollided(this.enemy, players, afterCollidePlayerAndEnemy)
   }
 
   draw(objects) {

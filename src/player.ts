@@ -1,13 +1,13 @@
 import Creature from './creature';
 import WorldObject from './base';
-import * as Spells from './spell/fabric';
+import {SpellType} from './spell/fabric';
 
 export default class Player extends Creature {
   textureIdsLeft= [145, 146]
   textureIdsRight = [161, 162]
   textureIdRight = 160
   textureIdLeft = 144
-  enabledSpells = [Spells.TAKE]
+  enabledSpells = [SpellType.TAKE]
   private timeout: number;
 
   constructor(model) {

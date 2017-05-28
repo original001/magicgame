@@ -12,7 +12,6 @@ export default class WorldObject {
   color: string;
   private _exist: boolean;
   textureId: number;
-  children: WorldObject[];
   movementMode: MovementMode;
   constructor(model, color) {
     this.pos = model.pos;

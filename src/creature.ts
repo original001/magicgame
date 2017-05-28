@@ -1,6 +1,5 @@
 import WorldObject from './base';
 import SAT from 'sat';
-import {createSpell} from './spell/fabric';
 import {MovementMode} from './base';
 
 export default class Creature extends WorldObject {
@@ -41,13 +40,6 @@ export default class Creature extends WorldObject {
   }
   freeze() {
     this.frozen = true;
-  }
-  createSpell() {
-    const spell = createSpell(this);
-
-    if (spell) {
-      this.children.push(spell);
-    }
   }
 
   setAnimations() {
