@@ -4,9 +4,6 @@ import Browser from './browser';
 import {satModel} from './satHelpers';
 import Painter from './painter';
 import {Key} from './key';
-import {throttle} from 'lodash';
-
-const SPELL_TIME = 1000;
 
 export default class Game {
   browser: Browser;
@@ -35,10 +32,10 @@ export default class Game {
       this.player.move('up');
     }
     if (key.isDown(Key.FORCE)) {
-      throttle(this.player.createSpell.bind(this), SPELL_TIME);
+      this.player.createSpell();
     }
     if (key.isDown(Key.CHANGE)) {
-      throttle(this.player.changeSpell.bind(this), 200);
+      this.player.changeSpell();
     }
   }
 

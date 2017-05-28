@@ -44,7 +44,7 @@ export default class World {
     this._spendTime = time;
 
     const {player, ground, enemies, spells} = this;
-    const objects = [player, ...ground, ...enemies];
+    const objects = [player, ...ground, ...enemies, ...spells];
 
     this.clean();
     this.moveEnemies();
@@ -59,6 +59,7 @@ export default class World {
   createSpells() {
     if (this.player.activeSpell) {
       const spell = createSpell(this.player);
+      this.player.flushSpell();
       if (spell) {
         this.spells.push(spell);
       }
@@ -81,7 +82,7 @@ export default class World {
 
   moveEnemies() {
     this.enemies.forEach(enemy => {
-      enemy.createSpell();
+      // enemy.createSpell();
       if (this.player.pos.x > enemy.pos.x) {
         enemy.move('forward');
       } else if (this.player.pos.x < enemy.pos.x) {

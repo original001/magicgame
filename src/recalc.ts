@@ -1,6 +1,7 @@
 import {G} from './constants';
 import Player from './player';
 import WorldObject, {MovementMode} from './base';
+import TakeSpell from './spell/take';
 
 export const recalc = (tick: number, objects: WorldObject[]) => {
     objects.forEach(function calc(obj) {

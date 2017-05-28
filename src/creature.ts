@@ -2,6 +2,7 @@ import WorldObject from './base';
 import SAT from 'sat';
 import {MovementMode} from './base';
 import {SpellType} from './spell/fabric';
+import {throttle} from 'lodash';
 
 export default class Creature extends WorldObject {
   activeSpell: SpellType = null;
@@ -13,8 +14,11 @@ export default class Creature extends WorldObject {
   movespeed = new SAT.Vector(200, 300);
   movementMode = MovementMode.Accelerate;
   private timer: number;
-  createSpell() {
+  createSpell = throttle(() => {
     this.activeSpell = SpellType.TAKE;
+  }, 100);
+  flushSpell() {
+    this.activeSpell = null;
   }
   move(dir) {
     switch (dir) {
