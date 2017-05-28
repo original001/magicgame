@@ -3,7 +3,7 @@ import WorldObject from './base';
 import {SpellType} from './spell/fabric';
 
 export default class Player extends Creature {
-  textureIdsLeft= [145, 146]
+  textureIdsLeft = [145, 146]
   textureIdsRight = [161, 162]
   textureIdRight = 160
   textureIdLeft = 144

@@ -1,5 +1,5 @@
 import SAT from 'sat';
-import {Ground, GroundItem} from './ground';
+import {GroundItem} from './ground';
 
 export const checkCollided = (objects, subject, callback) => {
   objects.forEach(obj => {
@@ -22,12 +22,6 @@ export const collideEnemy = (enemy, player, responce) => {
 
 export const collideGround = (ground, creature, responce) => {
   if (ground && responce.overlap > 0) {
-    if (ground instanceof Ground) {
-      creature.pos.y = ground.pos.y - creature.model.h;
-      creature.speed.y = 0;
-      creature.mayJump = true;
-    }
-
     if (ground instanceof GroundItem) {
       if (responce.overlapN.x > 0) {
         creature.pos.x = ground.pos.x - creature.model.w;

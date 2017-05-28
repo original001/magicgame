@@ -1,9 +1,8 @@
 import WorldObject from './../base';
+import SAT from 'sat';
 
-export default class Spell extends WorldObject {
-  speed = new SAT.Vector(0, 0);
-  active = true;
+export interface Spell {
+  speed: SAT.Vector;
 
-  /* abstract */
-  collide(target) {throw ''}
+  collide(target);
 }

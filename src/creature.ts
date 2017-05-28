@@ -1,8 +1,10 @@
 import WorldObject from './base';
 import SAT from 'sat';
 import {MovementMode} from './base';
+import {SpellType} from './spell/fabric';
 
 export default class Creature extends WorldObject {
+  activeSpell: SpellType = null;
   speed = new SAT.Vector(0, 0);
   frozen = false;
   direction = 1;
@@ -11,6 +13,9 @@ export default class Creature extends WorldObject {
   movespeed = new SAT.Vector(200, 300);
   movementMode = MovementMode.Accelerate;
   private timer: number;
+  createSpell() {
+    this.activeSpell = SpellType.TAKE;
+  }
   move(dir) {
     switch (dir) {
       case 'forward':

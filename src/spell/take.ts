@@ -1,24 +1,26 @@
-import Spell from './spell';
+import {Spell} from './spell';
+import SAT from 'sat';
+import Creature from '../creature';
+import WorldObject from '../base';
 
-export default class TakeSpell extends Spell {
-  constructor(source) {
+export default class TakeSpell extends WorldObject implements Spell {
+  speed: SAT.Vector;
+  source: Creature;
+  constructor(source: Creature) {
     const pos = new SAT.Vector(source.pos.x + source.model.w/2, source.pos.y + 10);
     const model = new SAT.Box(pos, 10, 10);
-    super(model);
-    this.speed.x = 400 * source.direction;
-    this.color = 'gray';
+    super(model, 'gray');
+    this.speed = new SAT.Vector(400 * source.direction, 0);
     this.source = source;
     this.init();
   }
 
   init() {
     setTimeout(() => {
-      this.active = false;
       this.remove()
     }, 150);
   }
 
-  /* ovveride */
   collide(target) {
     const source = this.source;
     if (target === source) return;

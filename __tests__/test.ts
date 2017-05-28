@@ -2,7 +2,7 @@ import Creature from '../src/creature';
 import SAT from 'sat';
 import {satModel} from '../src/satHelpers';
 import {checkCollided, collideGround, collideEnemy} from '../src/collides';
-import {Ground, GroundItem} from '../src/ground'
+import {GroundItem} from '../src/ground'
 import Player from '../src/player';
 import Enemy from '../src/enemy';
 
@@ -21,7 +21,7 @@ describe('should', () => {
   })
 
   it('should stop', () => {
-    const player = new Player(satModel(10, 10, 10, 10, 'white'));
+    const player = new Player(satModel(10, 10, 10, 10));
     player.speed.y = 1000
     const ground = new GroundItem(satModel(10, 20 - 1, 10, 10))
 
@@ -31,7 +31,7 @@ describe('should', () => {
     expect(player.pos.y).toBe(9);
   })
   it('should not stop', () => {
-    const player = new Player(satModel(10, 10, 10, 10, 'white'));
+    const player = new Player(satModel(10, 10, 10, 10));
     player.speed.x = 1000
     const ground = new GroundItem(satModel(20 - 1, 10, 10, 10))
 
@@ -41,7 +41,7 @@ describe('should', () => {
   })
 
   it('should defeat enemy', () => {
-    const player = new Player(satModel(10, 10, 10, 10, 'white'));
+    const player = new Player(satModel(10, 10, 10, 10));
     const enemy = new Enemy(satModel(10, 20 - 1, 10, 10))
 
     checkCollided([enemy], player, collideEnemy);
@@ -51,7 +51,7 @@ describe('should', () => {
   })
 
   it('should die by enemy', () => {
-    const player = new Player(satModel(10, 10, 10, 10, 'white'));
+    const player = new Player(satModel(10, 10, 10, 10));
     const enemy = new Enemy(satModel(20 - 1, 10, 10, 10))
 
     checkCollided([enemy], player, collideEnemy);

@@ -1,6 +1,6 @@
 import WorldObject from './base';
 import Player from './player';
-import {Ground, GroundItem} from './ground';
+import {GroundItem} from './ground';
 import Enemy from './enemy';
 import Creature from './creature';
 import {SpellType, colors, createSpell} from './spell/fabric';
@@ -13,7 +13,7 @@ import {recalc} from './recalc';
 
 export default class World {
   private _spendTime: number;
-  private ground: Ground[];
+  private ground: GroundItem[];
   private enemies: Enemy[];
   private spells: Array<any>;
 
@@ -39,13 +39,6 @@ export default class World {
     this.enemies = initObjects(parsedData, textureMap.enemy);
   }
 
-  createSpell(creature: Creature) {
-    const spell = createSpell(creature);
-    if (spell) {
-      this.spells.push(spell);
-    }
-  }
-
   update(time = 0) {
     const tick = (time - this._spendTime) / 1000;
     this._spendTime = time;
@@ -55,11 +48,21 @@ export default class World {
 
     this.clean();
     this.moveEnemies();
+    this.createSpells();
     this.onTick();
     recalc(tick, objects);
     this.collision();
     this.painter.drawElements(objects, player.pos);
     requestAnimationFrame(this.update.bind(this));
+  }
+
+  createSpells() {
+    if (this.player.activeSpell) {
+      const spell = createSpell(this.player);
+      if (spell) {
+        this.spells.push(spell);
+      }
+    }
   }
 
   clean() {
@@ -78,7 +81,7 @@ export default class World {
 
   moveEnemies() {
     this.enemies.forEach(enemy => {
-      this.createSpell(enemy);
+      enemy.createSpell();
       if (this.player.pos.x > enemy.pos.x) {
         enemy.move('forward');
       } else if (this.player.pos.x < enemy.pos.x) {
