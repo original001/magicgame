@@ -13,7 +13,7 @@ import {recalc} from './recalc';
 
 export default class World {
   private _spendTime: number;
-  private ground: GroundItem[];
+  private grounds: GroundItem[];
   private enemies: Enemy[];
   private spells: Array<any>;
 
@@ -28,12 +28,13 @@ export default class World {
   }
 
   addCreatures() {
+    //todo: extract initObjects invoke
     const parsedData = parseData(data);
     const player = initObjects(parsedData, textureMap.player)[0];
     this.player.model = player.model;
     this.player.pos = player.pos;
 
-    this.ground = initObjects(parsedData, textureMap.ground)
+    this.grounds = initObjects(parsedData, textureMap.ground)
                     .concat(initObjects(parsedData, textureMap.groundItem))
                     .concat(initObjects(parsedData, textureMap.grass));
     this.enemies = initObjects(parsedData, textureMap.enemy);
@@ -43,8 +44,8 @@ export default class World {
     const tick = (time - this._spendTime) / 1000;
     this._spendTime = time;
 
-    const {player, ground, enemies, spells} = this;
-    const objects = [player, ...ground, ...enemies, ...spells];
+    const {player, grounds, enemies, spells} = this;
+    const objects = [player, ...grounds, ...enemies, ...spells];
 
     this.clean();
     this.moveEnemies();
@@ -67,17 +68,12 @@ export default class World {
   }
 
   clean() {
-    //todo: clear dead spells
-    const {spells, enemies} = this;
+    this.spells = this.spells.filter(spell => spell.exist);
+    this.enemies = this.enemies.filter(enemy => enemy.exist);
 
-    const unused = spells.filter(obj => !obj.exist);
-    enemies.filter(obj => !obj.exist).forEach(elem => {
-      enemies.splice(enemies.indexOf(elem), 1)
-    })
-
-    unused.forEach(elem => {
-      spells.splice(spells.indexOf(elem), 1);
-    })
+    // enemies.filter(obj => !obj.exist).forEach(elem => {
+    //   enemies.splice(enemies.indexOf(elem), 1)
+    // })
   };
 
   moveEnemies() {
@@ -97,14 +93,14 @@ export default class World {
     const creatures = [this.player, ...this.enemies];
     creatures.forEach(creature => {
       creature.mayJump = false;
-      checkCollided(this.ground, creature, collideGround);
+      checkCollided(this.grounds, creature, collideGround);
 
       checkCollided(this.spells, creature, (spell, creature) => {
         spell.collide(creature);
       })
     })
 
-    this.ground.forEach(ground => {
+    this.grounds.forEach(ground => {
       checkCollided(this.spells, ground, (spell, ground) => {
         spell.collide(ground);
       })

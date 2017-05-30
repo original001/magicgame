@@ -20,6 +20,7 @@ export default class Creature extends WorldObject {
   flushSpell() {
     this.activeSpell = null;
   }
+  //todo: create impulses
   move(dir) {
     switch (dir) {
       case 'forward':
@@ -35,6 +36,7 @@ export default class Creature extends WorldObject {
         this.speed.y = this.movespeed.y;
         break;
       case 'stop':
+        this.speed.x = 0;
         this.stopAnimation();
     }
   }
@@ -51,6 +53,7 @@ export default class Creature extends WorldObject {
     this.frozen = true;
   }
 
+  //todo: extract in devided module
   setAnimations() {
     switch(this.direction) {
       case 1:

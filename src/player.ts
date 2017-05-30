@@ -7,7 +7,7 @@ export default class Player extends Creature {
   textureIdsRight = [161, 162]
   textureIdRight = 160
   textureIdLeft = 144
-  enabledSpells = [SpellType.TAKE]
+  enabledSpells = [SpellType.BOLT]
   private timeout: number;
 
   constructor(model) {
