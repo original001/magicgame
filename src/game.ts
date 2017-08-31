@@ -4,17 +4,10 @@ import Browser from './browser';
 import {satModel} from './satHelpers';
 import Painter from './painter';
 import {Key} from './key';
+import scope, {IScope} from './scope';
 
-export default class Game {
-  browser: Browser;
-  world: World;
-  player: Player;
-
-  constructor() {
-    this.browser = new Browser();
-    this.player = new Player(satModel(0, 0, 0, 0))
-    this.world = new World(this.player, new Painter(this.browser.canvas), this.handleTick)
-  }
+export default class KeyMap {
+  constructor(private browser: Browser, private player: Player) {}
 
   handleTick = () => {
     const key = this.browser.keyboard;
@@ -38,6 +31,4 @@ export default class Game {
       this.player.changeSpell();
     }
   }
-
-  start() {};
 }

@@ -4,25 +4,31 @@ import {GroundItem} from './ground';
 import Enemy from './enemy';
 import Creature from './creature';
 import {SpellType, colors, createSpell} from './spell/fabric';
-import data from '../maps/map.json';
 import {createObjectByTexId, textureMap, initObjects} from "./fabric";
 import {checkCollided, collideEnemy, collideGround} from './collides';
 import {parseData} from './parseData';
 import Painter from './painter';
 import {recalc} from './recalc';
+import KeyMap from './game';
+const data = require('../maps/map.json');
 
 export default class World {
   private _spendTime: number;
   private grounds: GroundItem[];
   private enemies: Enemy[];
   private spells: Array<any>;
+  private onTick: () => void;
 
   constructor(
     private player: Player,
     private painter: Painter,
-    private onTick: () => void) {
+    keyMap: KeyMap) {
+    this.onTick = keyMap.handleTick;
     this._spendTime = 0;
     this.spells = [];
+  }
+
+  start() {
     this.addCreatures();
     this.update();
   }
