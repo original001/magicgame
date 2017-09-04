@@ -14,7 +14,7 @@ export const recalc = (tick: number, objects: WorldObject[]) => {
       if (obj.movementMode === MovementMode.Accelerate) {
         obj.pos.x += obj.speed.x * tick;
         obj.pos.y = obj.pos.y - obj.speed.y * tick + G * tick * tick / 2;
-        obj.speed.y -= G;
+        obj.speed.y -= obj.G || G;
       }
       // creature.color = creature.enabledSpells[0] ? colors[creature.enabledSpells[0]] : 'black';
     }.bind(this));

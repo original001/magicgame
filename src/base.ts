@@ -13,6 +13,7 @@ export default class WorldObject {
   private _exist: boolean;
   textureId: number;
   movementMode: MovementMode;
+  G: number;
   constructor(model, color?) {
     this.pos = model.pos;
     this.model = model;

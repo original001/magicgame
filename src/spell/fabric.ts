@@ -1,6 +1,8 @@
 import Spell from './spell';
 import BoltSpell from './bolt';
 import TakeSpell from './take';
+import TeleportSpell from './teleport';
+import FlySpell from './fly'; 
 
 export enum SpellType {
   BOLT,
@@ -9,6 +11,7 @@ export enum SpellType {
   KICK,
   FIRE,
   TAKE,
+  FLY,
 }
 
 export const colors = {
@@ -31,6 +34,12 @@ export const createSpell = (source) => {
       break;
     case SpellType.TAKE:
       spell = new TakeSpell(source);
+      break;
+    case SpellType.TELEPORT:
+      spell = new TeleportSpell(source);
+      break;
+    case SpellType.FLY:
+      spell = new FlySpell(source);
       break;
     // case SpellType.TELEPORT:
     //   spell = new Spell(source.pos.x + source.model.w, source.pos.y + 10, 5, 5, 'purple');
