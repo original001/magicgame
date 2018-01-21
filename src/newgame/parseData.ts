@@ -3,8 +3,7 @@ import { MyMap } from "../../maps/map";
 import * as SAT from "sat";
 import { last } from "ramda";
 
-//todo: add tests
-export const getCoordsFromList = (ind, columns) => {
+export const getCoordsFromList = (ind, columns): SAT.Vector => {
   const a = ind / columns;
   const rows = Math.floor(a);
   const y = rows;
@@ -12,18 +11,18 @@ export const getCoordsFromList = (ind, columns) => {
   return fromVector(x, y);
 };
 
-//todo: add tests
-export const parseData = (data: MyMap): { [id: number]: SAT.Box }[] => {
+export const parseData = (data: MyMap) => {
   const { tileheight, tilewidth, layers, height, width } = data;
   const dots = layers[0].data;
   const coords = dots.reduce((acc, dot, ind) => {
     if (dot === 0) {
       return acc;
     }
-    acc.push({
-      [dot - 1]: fromModel(getCoordsFromList(ind, width), tilewidth, tileheight)
-    });
-  }, []);
+    const coord = getCoordsFromList(ind, width);
+    return acc.concat([
+      [dot - 1, fromModel(coord.scale(20, 20), tilewidth, tileheight)]
+    ]);
+  }, [] as [ number, SAT.Box ][]);
 
   return coords;
 };

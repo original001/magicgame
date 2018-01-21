@@ -1,44 +1,49 @@
-interface PhObject {
+export interface Entity {
   id: number;
-  box: SAT.Box;
+  type: string;
+  texture: Texture;
+  object: SAT.Box;
 }
 
-interface Creature {
+export interface Creature extends Entity {
   id: number;
-  role: "player" | "enemy";
+  type: "player" | "enemy";
   direction: number;
   speed: number;
-  texture: number;
-  object: number;
+  texture: Texture;
+  object: SAT.Box;
 }
 
-interface Terrain {
+export interface Terrain extends Entity {
   id: number;
   type: "ground";
-  texture: number;
-  object: number;
+  texture: Texture;
+  object: SAT.Box;
 }
 
-const fromObject = ((id) => (box) => ({ id: id++, box }))(0);
+export interface Texture {
+  stat: number,
+  left?: number,
+  right?: number,
+}
 
-const fromCreature = ((id) => (role, texture, object) => ({
-  id,
-  role,
+const fromCreature = ((id) => (type, texture: Texture, object): Creature => ({
+  id: id++,
+  type,
   texture,
   object,
   speed: 0,
   direction: 0
 }))(0);
 
-const fromTexture = ((id) => (stat, left?, right?) => ({
-  id,
+const fromTexture = (stat, left?, right?): Texture => ({
   stat,
   left,
   right
-}))(0);
+});
 
-const fromTerrain = ((id) => (type, texture, object) => ({
-  id,
+const fromTerrain = ((id) => (type, texture: Texture, object): Terrain => ({
+  id: id++,
   type,
   texture,
   object
@@ -52,33 +57,23 @@ export const textureMap = {
   enemy: 214
 };
 
-export const createObjectByTexId = (textureId, box: SAT.Box) => {
-  let obj;
+export const createObjectByTexId = (textureId, box: SAT.Box): Entity => {
   switch (textureId) {
     case 104:
     case 30:
     case 46:
-      const terrain = fromTerrain(
-        "ground",
-        fromTexture(textureId),
-        fromObject(box)
-      );
-      break;
+      return fromTerrain("terrain", fromTexture(textureId), box);
     case 160:
-      const player = fromCreature(
+      return fromCreature(
         "player",
         fromTexture(textureId, 145, 160),
-        fromObject(box)
+        box
       );
-      break;
     case 214:
-      const enemy = fromCreature(
+      return fromCreature(
         "enemy",
         fromTexture(textureId, 230, 230),
-        fromObject(box)
+        box
       );
-      break;
   }
-  obj.textureId = textureId;
-  return obj;
 };

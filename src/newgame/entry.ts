@@ -1,17 +1,76 @@
-import { createStore, combineReducers } from "redux";
+import { createStore, combineReducers, compose } from "redux";
 import * as SAT from "sat";
-import {parseData} from './parseData'
-import {MyMap} from '../../maps/map';
+import { parseData } from "./parseData";
+import { MyMap } from "../../maps/map";
+import { createObjectByTexId, Terrain, Creature, Texture } from "./fabric";
+import { schema, normalize } from "normalizr";
+import { Painter } from "./painter";
 const map: MyMap = require("../../maps/map.json");
 
-const parsedMap = parseData(map)
+const parsedMap = parseData(map);
 
-const reducers = combineReducers({});
+const initedMap = parsedMap.map(([id, box]) => createObjectByTexId(id, box));
 
-const initialState = {};
+const world = {
+  terrains: initedMap.filter((item) => item.type === "terrain"),
+  players: initedMap.filter((item) => item.type === "player"),
+  creatures: initedMap.filter((item) => item.type === "enemy")
+};
 
-const store = createStore(reducers, initialState);
+const terrain = new schema.Entity("terrains");
+const player = new schema.Entity("players");
+const creature = new schema.Entity("creatures");
+
+interface State {
+  entities: {
+    terrains: {[id: string]: Terrain};
+    creatures: {[id: string]: Creature};
+    players: {[id: string]: Creature};
+  };
+  result: {
+    terrains: number[];
+    creatures: number[];
+    players: number[];
+  };
+}
+
+const initialState: State = normalize(world, {
+  terrains: new schema.Array(terrain),
+  players: new schema.Array(player),
+  creatures: new schema.Array(creature)
+});
+
+const reducers = combineReducers<State>({
+  entities: combineReducers({
+    terrains: (state = null, a) => state,
+    players: (state = null, a) => state,
+    creatures: (state = null, a) => state
+  }),
+  result: (state = [], a) => state
+});
+
+const store = createStore(
+  reducers,
+  initialState,
+  compose(
+    (window as any).__REDUX_DEVTOOLS_EXTENSION__
+      ? (window as any).__REDUX_DEVTOOLS_EXTENSION__()
+      : (noop) => noop
+  )
+);
+
+const painter = new Painter(document.getElementById(
+  "canvas"
+) as HTMLCanvasElement);
+
+  painter.drawElements(
+    store.getState().entities.terrains,
+    store.getState().entities.players[0].object.pos
+  );
 
 store.subscribe(() => {
-  //painter
+  painter.drawElements(
+    store.getState().entities.terrains,
+    store.getState().entities.players[0].object.pos
+  );
 });

@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "lodash": "^4.17.4",
+    "normalizr": "^3.2.4",
     "ramda": "^0.25.0",
     "redux": "^3.7.2",
     "sat": "^0.6.0"
@@ -26,7 +27,8 @@
     "ts-jest": "^20.0.4",
     "ts-loader": "^2.0.3",
     "typescript": "^2.3.2",
-    "webpack": "^1.14.0"
+    "webpack": "^1.14.0",
+    "webpack-dev-server": "^1.11.1"
   },
   "jest": {
     "transform": {
