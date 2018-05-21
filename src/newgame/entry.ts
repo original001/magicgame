@@ -63,14 +63,26 @@ const painter = new Painter(document.getElementById(
   "canvas"
 ) as HTMLCanvasElement);
 
-  painter.drawElements(
-    store.getState().entities.terrains,
-    store.getState().entities.players[0].object.pos
-  );
+const entities = store.getState().entities;
+const centerCamera = entities.players[0].object.pos;
+
+painter.drawElements(
+  entities.terrains,
+  centerCamera
+);
+
+painter.drawElements(
+  entities.players,
+  centerCamera
+);
 
 store.subscribe(() => {
   painter.drawElements(
-    store.getState().entities.terrains,
-    store.getState().entities.players[0].object.pos
+    entities.terrains,
+    centerCamera
+  );
+  painter.drawElements(
+    entities.players,
+    centerCamera
   );
 });

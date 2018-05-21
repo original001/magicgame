@@ -10,11 +10,20 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/jest": "^22.2.3",
+    "@types/sat": "0.0.29",
+    "flyd": "^0.2.6",
+    "flyd-buffercount": "^0.1.0",
+    "flyd-keyboard": "^1.1.0",
+    "flyd-withlatestfrom": "^0.1.0",
+    "flyd-zip": "0.0.1",
     "lodash": "^4.17.4",
     "normalizr": "^3.2.4",
     "ramda": "^0.25.0",
     "redux": "^3.7.2",
-    "sat": "^0.6.0"
+    "rxjs": "^6.1.0",
+    "sat": "^0.6.0",
+    "transducers.js": "^0.3.2"
   },
   "devDependencies": {
     "babel": "^6.5.2",

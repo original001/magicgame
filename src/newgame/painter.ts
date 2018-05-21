@@ -11,10 +11,11 @@ export class Painter {
     this.ctx = this.canvas.getContext('2d');
     this.center = new SAT.Vector(this.canvas.width/2, this.canvas.height/2);
     this.img = document.getElementById('img') as HTMLImageElement;
+    this.ctx.fillStyle = '#abd5fc';
+    this.ctx.fillRect(0, 0, this.canvas.offsetWidth, this.canvas.offsetHeight, '#abd5fc');
   }
   drawElements(elements: {[id: string]: Entity}, playerPos) {
     this.ctx.fillStyle = '#abd5fc';
-    this.ctx.fillRect(0, 0, this.canvas.offsetWidth, this.canvas.offsetHeight, '#abd5fc');
     forEachObjIndexed((elem: Entity, id: number) => {
       const {pos, w, h} = elem.object;
       const x = pos.x + this.center.x - playerPos.x;

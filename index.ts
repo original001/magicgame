@@ -1,1 +1,1 @@
-import './src/newgame/entry';
+import './src/rxgame';
