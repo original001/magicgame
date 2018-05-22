@@ -7,6 +7,7 @@ const keyup = flyd.stream<KeyboardEvent>();
 const G = 9.8;
 
 const vec = (x: number, y: number) => new Vector(x, y);
+const abs = Math.abs;
 
 window.addEventListener("keydown", keydown);
 window.addEventListener("keyup", keyup);
@@ -16,10 +17,28 @@ const ctx = canvas.getContext("2d");
 ctx.fillStyle = "#abd5fc";
 ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
 
-const collide = (box1: Box, box2: Box): Response => {
-  const res = new Response();
-  testPolygonPolygon(box1.toPolygon(), box2.toPolygon(), res);
-  return res;
+const collide = (box1: Box, ...boxes: Box[]) => {
+  const initialVectors = {
+    overlapN: vec(0, 0),
+    overlapV: vec(0, 0)
+  }
+  const collidedBoxes = boxes.filter(box =>
+    testPolygonPolygon(box1.toPolygon(), box.toPolygon())
+  )
+  const isCollided = collidedBoxes.length > 0;
+  const vectors = collidedBoxes.reduce((vectors, box) => {
+    const res = new Response();
+    testPolygonPolygon(box1.toPolygon(), box.toPolygon(), res)
+    return {
+      overlapN: res.overlapN.add(vectors.overlapN),
+      overlapV: res.overlapV.add(vectors.overlapV)
+    }
+  }, initialVectors);
+
+  return {
+    isCollided,
+    ...vectors
+  };
 };
 
 interface State {
@@ -33,7 +52,7 @@ const player: State = {
 };
 
 const block: State = {
-  box: new Box(new Vector(200, 0), 40, 40),
+  box: new Box(new Vector(200, 60), 40, 40),
   speed: new Vector(0, 0)
 };
 
@@ -41,38 +60,6 @@ const ground: State = {
   box: new Box(new Vector(0, 100), 500, 100),
   speed: new Vector(0, 0)
 };
-
-const moveRight = (timeDelta: number) => ({ box, speed }: State): State => ({
-  box: new Box(
-    new Vector(box.pos.x + timeDelta * 200, box.pos.y),
-    box.w,
-    box.h
-  ),
-  speed
-});
-
-const moveLeft = (timeDelta: number) => ({ box, speed }: State): State => ({
-  box: new Box(
-    new Vector(box.pos.x - timeDelta * 200, box.pos.y),
-    box.w,
-    box.h
-  ),
-  speed
-});
-
-const gravity = (timeDelta: number) => ({ box, speed }: State): State => ({
-  box: new Box(
-    new Vector(
-      box.pos.x + speed.x * timeDelta,
-      box.pos.y - speed.y * timeDelta + G * timeDelta * timeDelta / 2
-    ),
-    box.w,
-    box.h
-  ),
-  speed: new Vector(speed.x, speed.y - G)
-});
-
-const stay = () => (obj: typeof player) => obj;
 
 const updating$ = flyd.stream<number>();
 
@@ -92,47 +79,69 @@ const cloneBox = ({ pos, w, h }: Box) =>
 const onGround = (player: State, ground: State) => {
   const testBox = cloneBox(player.box);
   testBox.pos.y += 1;
-  const res = collide(testBox, ground.box);
-  return res.overlapV.y === 1;
+  const { overlapV } = collide(testBox, ground.box, block.box);
+  return overlapV.y === 1;
 };
 
 const block$ = flyd.stream(block);
-const speed$ = flyd.merge(keydown, keyup).map(({ type, code }) => {
-  if (type === "keydown") {
-    switch (code) {
-      case "ArrowLeft":
-        return vec(-200, 0);
-      case "ArrowRight":
-        return vec(200, 0);
-      case "ArrowUp":
-        return vec(0, -200);
+
+const speed$ = flyd.scan(
+  (speed, { type, code }) => {
+    const { x: vx, y: vy } = speed;
+    if (type === "keydown") {
+      switch (code) {
+        case "ArrowLeft":
+          return vec(-200, 0);
+        case "ArrowRight":
+          return vec(200, 0);
+        case "ArrowUp":
+          return vec(vx, -300);
+        default:
+          return speed;
+      }
+    } else {
+      switch (code) {
+        case "ArrowLeft":
+        case "ArrowRight":
+          return vec(0, 0);
+        case "ArrowUp":
+          return vec(vx, 0);
+        default:
+          return speed;
+      }
     }
-  }
-  return vec(0, 0);
-});
+  },
+  vec(0, 0),
+  flyd.merge(keydown, keyup)
+);
 
 const moving$ = flyd.scan(
   (player, [timeDelta, { x: speedX, y: speedY }]) => {
     const { speed, box } = player;
     const { x, y } = box.pos;
-    if (!onGround(player, ground)) {
-      speedX = 0;
-      speedY = 0;
-    }
-    const newSpeedY = speedY !== 0 ? speedY : speed.y + G;
+    const inAir = !onGround(player, ground);
+    const newSpeedX = speedX;
+    const newSpeedY = inAir ? speed.y + G : speedY;
     const newPlayer = {
       box: new Box(
-        new Vector(x + speedX * timeDelta, y + newSpeedY * timeDelta),
+        new Vector(x + newSpeedX * timeDelta, y + newSpeedY * timeDelta),
         box.w,
         box.h
       ),
-      speed: new Vector(speedX, newSpeedY)
+      speed: new Vector(newSpeedX, newSpeedY)
     };
-    const res = collide(newPlayer.box, ground.box);
-    if (res.overlapV.y > 0) {
-      //some weird behavior with nonzero value like 1.15014e+310
-      newPlayer.box.pos.sub(res.overlapV);
-      newPlayer.speed = vec(0, 0);
+    const { overlapN, overlapV, isCollided } = collide(
+      newPlayer.box,
+      ground.box,
+      block$().box
+    );
+    if (isCollided) {
+      newPlayer.box.pos.sub(overlapV);
+      const overlapNToSpeed = (overlap: number) => (abs(overlap) === 1 ? 0 : 1);
+      newPlayer.speed.scale(
+        overlapNToSpeed(overlapN.x),
+        overlapNToSpeed(overlapN.y)
+      );
     }
     return newPlayer;
   },
