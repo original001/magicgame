@@ -1,8 +1,7 @@
 export interface Entity {
   id: number;
-  type: string;
   texture: Texture;
-  object: SAT.Box;
+  box: SAT.Box;
 }
 
 export interface Creature extends Entity {
@@ -11,14 +10,12 @@ export interface Creature extends Entity {
   direction: number;
   speed: number;
   texture: Texture;
-  object: SAT.Box;
 }
 
 export interface Terrain extends Entity {
   id: number;
   type: "ground";
   texture: Texture;
-  object: SAT.Box;
 }
 
 export interface Texture {
@@ -27,26 +24,32 @@ export interface Texture {
   right?: number,
 }
 
-const fromCreature = ((id) => (type, texture: Texture, object): Creature => ({
+export const fromEntity = ((id) => (texture: Texture, box): Entity => ({
+  id: id++,
+  texture,
+  box,
+}))(0);
+
+const fromCreature = ((id) => (type, texture: Texture, box): Creature => ({
   id: id++,
   type,
   texture,
-  object,
+  box,
   speed: 0,
   direction: 0
 }))(0);
 
-export const fromTexture = (stat, left?, right?): Texture => ({
+const fromTexture = (stat, left?, right?): Texture => ({
   stat,
   left,
   right
 });
 
-const fromTerrain = ((id) => (type, texture: Texture, object): Terrain => ({
+const fromTerrain = ((id) => (type, texture: Texture, box): Terrain => ({
   id: id++,
   type,
   texture,
-  object
+  box
 }))(0);
 
 export const textureMap = {

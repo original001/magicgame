@@ -1,6 +1,29 @@
 import * as flyd from "flyd";
 import { Vector, Box, Response, testPolygonPolygon } from "sat";
 import withLatestFrom from "flyd-withlatestfrom";
+import { MyMap } from "../../maps/map";
+import { parseData , getCoordsFromList } from "./parseData";
+import { createObjectByTexId, fromEntity, Entity } from "./fabric";
+import { fromTexture } from "../newgame/fabric";
+import { contains } from "ramda";
+const map: MyMap = require("../../maps/map.json");
+
+const parsedMap = parseData(map);
+
+const initedMap = parsedMap.map(([id, box]) =>
+  fromEntity(fromTexture(id), box)
+);
+
+const playerEntity = initedMap.find(entity => entity.texture.stat === 160);
+
+const player = {
+  ...playerEntity,
+  speed: new Vector()
+};
+
+const terrains = initedMap.filter(entity =>
+  contains(entity.texture.stat, [104, 30, 46])
+);
 
 const keydown = flyd.stream<KeyboardEvent>();
 const keyup = flyd.stream<KeyboardEvent>();
@@ -12,27 +35,29 @@ const abs = Math.abs;
 window.addEventListener("keydown", keydown);
 window.addEventListener("keyup", keyup);
 
+const img = document.getElementById('img') as HTMLImageElement;
+
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
 ctx.fillStyle = "#abd5fc";
 ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
 
-const collide = (box1: Box, ...boxes: Box[]) => {
+const collide = (sourceBox: Box, ...entities: Entity[]) => {
   const initialVectors = {
     overlapN: vec(0, 0),
     overlapV: vec(0, 0)
-  }
-  const collidedBoxes = boxes.filter(box =>
-    testPolygonPolygon(box1.toPolygon(), box.toPolygon())
-  )
+  };
+  const collidedBoxes = entities.filter(entity =>
+    testPolygonPolygon(sourceBox.toPolygon(), entity.box.toPolygon())
+  );
   const isCollided = collidedBoxes.length > 0;
-  const vectors = collidedBoxes.reduce((vectors, box) => {
+  const vectors = collidedBoxes.reduce((vectors, entity) => {
     const res = new Response();
-    testPolygonPolygon(box1.toPolygon(), box.toPolygon(), res)
+    testPolygonPolygon(sourceBox.toPolygon(), entity.box.toPolygon(), res);
     return {
       overlapN: res.overlapN.add(vectors.overlapN),
       overlapV: res.overlapV.add(vectors.overlapV)
-    }
+    };
   }, initialVectors);
 
   return {
@@ -45,26 +70,6 @@ interface State {
   box: Box;
   speed: Vector;
 }
-
-const player: State = {
-  box: new Box(new Vector(0, 0), 10, 40),
-  speed: new Vector()
-};
-
-const block: State = {
-  box: new Box(new Vector(200, 160), 40, 40),
-  speed: new Vector(0, 0)
-};
-
-const block2: State = {
-  box: new Box(new Vector(300, 100), 40, 40),
-  speed: new Vector(0, 0)
-};
-
-const ground: State = {
-  box: new Box(new Vector(0, 200), 500, 100),
-  speed: new Vector(0, 0)
-};
 
 const updating$ = flyd.stream<number>();
 
@@ -81,14 +86,12 @@ update(_spendTime);
 const cloneBox = ({ pos, w, h }: Box) =>
   new Box(new Vector(pos.x, pos.y), w, h);
 
-const onGround = (player: State, ground: State) => {
+const onGround = (player: State) => {
   const testBox = cloneBox(player.box);
   testBox.pos.y += 1;
-  const { overlapV } = collide(testBox, ground.box, block.box, block2.box);
+  const { overlapV } = collide(testBox, ...terrains);
   return overlapV.y === 1;
 };
-
-const block$ = flyd.stream(block);
 
 const speed$ = flyd.scan(
   (speed, { type, code }) => {
@@ -125,7 +128,7 @@ const moving$ = flyd.scan(
   (player, [timeDelta, { x: speedX, y: speedY }]) => {
     const { speed, box } = player;
     const { x, y } = box.pos;
-    const inAir = !onGround(player, ground);
+    const inAir = !onGround(player);
     const newSpeedX = speedX;
     const newSpeedY = inAir ? speed.y + G : speedY;
     const newPlayer = {
@@ -138,9 +141,7 @@ const moving$ = flyd.scan(
     };
     const { overlapN, overlapV, isCollided } = collide(
       newPlayer.box,
-      ground.box,
-      block.box,
-      block2.box
+      ...terrains
     );
     if (isCollided) {
       newPlayer.box.pos.sub(overlapV);
@@ -163,17 +164,9 @@ flyd.on(state => {
   ctx.fillStyle = "#333";
   ctx.fillRect(pos.x, pos.y, w, h);
   ctx.fillStyle = "#666";
-  ctx.fillRect(
-    block.box.pos.x,
-    block.box.pos.y,
-    block.box.w,
-    block.box.h
-  );
-  ctx.fillRect(
-    block2.box.pos.x,
-    block2.box.pos.y,
-    block2.box.w,
-    block2.box.h
-  );
-  ctx.fillRect(ground.box.pos.x, ground.box.pos.y, ground.box.w, ground.box.h);
+  terrains.forEach(({ box: {pos: {x, y}, w, h}, texture }) => {
+    // const coord = getCoordsFromList(texture.stat, 16);
+    // ctx.drawImage(img, coord.x * 20, coord.y * 20, 20, 20, x, y, w, h)
+    ctx.fillRect(x, y, w, h);
+  });
 }, moving$);

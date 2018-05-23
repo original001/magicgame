@@ -11,6 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "@types/jest": "^22.2.3",
+    "@types/ramda": "^0.25.29",
+    "@types/requirejs": "^2.1.31",
     "@types/sat": "0.0.29",
     "flyd": "^0.2.6",
     "flyd-buffercount": "^0.1.0",
@@ -35,7 +37,7 @@
     "json-loader": "^0.5.4",
     "ts-jest": "^20.0.4",
     "ts-loader": "^2.0.3",
-    "typescript": "^2.3.2",
+    "typescript": "^2.8.3",
     "webpack": "^1.14.0",
     "webpack-dev-server": "^1.11.1"
   },

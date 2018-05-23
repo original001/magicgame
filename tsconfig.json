@@ -5,6 +5,7 @@
   },
   "include": [
     "__tests__",
-    "src/rxgame"
+    "src/rxgame",
+    "maps"
   ]
 }
