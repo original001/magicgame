@@ -52,12 +52,17 @@ const player: State = {
 };
 
 const block: State = {
-  box: new Box(new Vector(200, 60), 40, 40),
+  box: new Box(new Vector(200, 160), 40, 40),
+  speed: new Vector(0, 0)
+};
+
+const block2: State = {
+  box: new Box(new Vector(300, 100), 40, 40),
   speed: new Vector(0, 0)
 };
 
 const ground: State = {
-  box: new Box(new Vector(0, 100), 500, 100),
+  box: new Box(new Vector(0, 200), 500, 100),
   speed: new Vector(0, 0)
 };
 
@@ -79,7 +84,7 @@ const cloneBox = ({ pos, w, h }: Box) =>
 const onGround = (player: State, ground: State) => {
   const testBox = cloneBox(player.box);
   testBox.pos.y += 1;
-  const { overlapV } = collide(testBox, ground.box, block.box);
+  const { overlapV } = collide(testBox, ground.box, block.box, block2.box);
   return overlapV.y === 1;
 };
 
@@ -103,6 +108,7 @@ const speed$ = flyd.scan(
       switch (code) {
         case "ArrowLeft":
         case "ArrowRight":
+          //todo: note previous direction
           return vec(0, 0);
         case "ArrowUp":
           return vec(vx, 0);
@@ -133,7 +139,8 @@ const moving$ = flyd.scan(
     const { overlapN, overlapV, isCollided } = collide(
       newPlayer.box,
       ground.box,
-      block$().box
+      block.box,
+      block2.box
     );
     if (isCollided) {
       newPlayer.box.pos.sub(overlapV);
@@ -157,10 +164,16 @@ flyd.on(state => {
   ctx.fillRect(pos.x, pos.y, w, h);
   ctx.fillStyle = "#666";
   ctx.fillRect(
-    block$().box.pos.x,
-    block$().box.pos.y,
-    block$().box.w,
-    block$().box.h
+    block.box.pos.x,
+    block.box.pos.y,
+    block.box.w,
+    block.box.h
+  );
+  ctx.fillRect(
+    block2.box.pos.x,
+    block2.box.pos.y,
+    block2.box.w,
+    block2.box.h
   );
   ctx.fillRect(ground.box.pos.x, ground.box.pos.y, ground.box.w, ground.box.h);
 }, moving$);
