@@ -6,6 +6,7 @@ import { parseData , getCoordsFromList } from "./parseData";
 import { createObjectByTexId, fromEntity, Entity } from "./fabric";
 import { fromTexture } from "../newgame/fabric";
 import { contains } from "ramda";
+import { collideN , onGround } from './collide';
 const map: MyMap = require("../../maps/map.json");
 
 const parsedMap = parseData(map);
@@ -42,30 +43,6 @@ const ctx = canvas.getContext("2d");
 ctx.fillStyle = "#abd5fc";
 ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
 
-const collide = (sourceBox: Box, ...entities: Entity[]) => {
-  const initialVectors = {
-    overlapN: vec(0, 0),
-    overlapV: vec(0, 0)
-  };
-  const collidedBoxes = entities.filter(entity =>
-    testPolygonPolygon(sourceBox.toPolygon(), entity.box.toPolygon())
-  );
-  const isCollided = collidedBoxes.length > 0;
-  const vectors = collidedBoxes.reduce((vectors, entity) => {
-    const res = new Response();
-    testPolygonPolygon(sourceBox.toPolygon(), entity.box.toPolygon(), res);
-    return {
-      overlapN: res.overlapN.add(vectors.overlapN),
-      overlapV: res.overlapV.add(vectors.overlapV)
-    };
-  }, initialVectors);
-
-  return {
-    isCollided,
-    ...vectors
-  };
-};
-
 interface State {
   box: Box;
   speed: Vector;
@@ -82,16 +59,6 @@ const update = time => {
 };
 
 update(_spendTime);
-
-const cloneBox = ({ pos, w, h }: Box) =>
-  new Box(new Vector(pos.x, pos.y), w, h);
-
-const onGround = (player: State) => {
-  const testBox = cloneBox(player.box);
-  testBox.pos.y += 1;
-  const { overlapV } = collide(testBox, ...terrains);
-  return overlapV.y === 1;
-};
 
 const speed$ = flyd.scan(
   (speed, { type, code }) => {
@@ -128,7 +95,7 @@ const moving$ = flyd.scan(
   (player, [timeDelta, { x: speedX, y: speedY }]) => {
     const { speed, box } = player;
     const { x, y } = box.pos;
-    const inAir = !onGround(player);
+    const inAir = !onGround(player.box, terrains);
     const newSpeedX = speedX;
     const newSpeedY = inAir ? speed.y + G : speedY;
     const newPlayer = {
@@ -139,13 +106,13 @@ const moving$ = flyd.scan(
       ),
       speed: new Vector(newSpeedX, newSpeedY)
     };
-    const { overlapN, overlapV, isCollided } = collide(
+    const { overlapN, overlapV, isCollided } = collideN(
       newPlayer.box,
       ...terrains
     );
     if (isCollided) {
       newPlayer.box.pos.sub(overlapV);
-      const overlapNToSpeed = (overlap: number) => (abs(overlap) === 1 ? 0 : 1);
+      const overlapNToSpeed = (overlap: number) => (abs(overlap) >= 1 ? 0 : 1);
       newPlayer.speed.scale(
         overlapNToSpeed(overlapN.x),
         overlapNToSpeed(overlapN.y)
@@ -159,14 +126,17 @@ const moving$ = flyd.scan(
 
 flyd.on(state => {
   const { box: { pos, w, h } } = state;
+  ctx.font = "10px Arial";
   ctx.fillStyle = "#abd5fc";
   ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
   ctx.fillStyle = "#333";
   ctx.fillRect(pos.x, pos.y, w, h);
-  ctx.fillStyle = "#666";
-  terrains.forEach(({ box: {pos: {x, y}, w, h}, texture }) => {
+  terrains.forEach(({ box: {pos: {x, y}, w, h}, texture, id }) => {
     // const coord = getCoordsFromList(texture.stat, 16);
     // ctx.drawImage(img, coord.x * 20, coord.y * 20, 20, 20, x, y, w, h)
+    ctx.fillStyle = "#666";
     ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = "#fff";
+    ctx.fillText(id.toString(), x + 5, y + 5)
   });
 }, moving$);

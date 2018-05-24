@@ -24,7 +24,7 @@
     "ramda": "^0.25.0",
     "redux": "^3.7.2",
     "rxjs": "^6.1.0",
-    "sat": "^0.6.0",
+    "sat": "^0.7.1",
     "transducers.js": "^0.3.2"
   },
   "devDependencies": {
