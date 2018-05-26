@@ -46,7 +46,7 @@ describe("collideN", () => {
     expect(overlapN.y).toBe(1);
     expect(isCollided).toBeTruthy();
   });
-  xit("should collided in same horizontal axis", () => {
+  it("should collided in same horizontal axis", () => {
     const sourceBox = new Box(new Vector(100, 0), 20, 20);
     const blocks = [
       new Box(new Vector(81, 0), 20, 20),
@@ -56,20 +56,20 @@ describe("collideN", () => {
     expect(overlapV.x).toBe(-1);
     expect(overlapV.y).toBe(0);
     expect(overlapN.x).toBe(-1);
-    expect(overlapN.y).toBe(0);
+    expect(overlapN.y).toBe(-1);
     expect(isCollided).toBeTruthy();
   });
-  xit("should collided with upper blocks", () => {
-    const sourceBox = new Box(new Vector(403.2, 278.4), 20, 20);
+  it("should collided with upper blocks", () => {
+    const sourceBox = new Box(new Vector(403, 278), 20, 20);
     const blocks = [
       new Box(new Vector(400, 260), 20, 20),
       new Box(new Vector(420, 260), 20, 20)
     ];
     const { overlapN, overlapV, isCollided } = collideN(sourceBox, ...blocks);
     expect(overlapV.x).toBe(0);
-    expect(overlapV.y).toBe(1.6);
+    expect(overlapV.y).toBe(-2);
     expect(overlapN.x).toBe(0);
-    expect(overlapN.y).toBe(1);
+    expect(overlapN.y).toBe(-1);
     expect(isCollided).toBeTruthy();
   });
 });
@@ -324,7 +324,7 @@ pos: 100 40
 speed: 200 0
 `);
   });
-  xit("collide from right", () => {
+  it("collide from right", () => {
     const player = {
       box: new Box(new Vector(101, 46), 20, 20),
       speed: new Vector(200, -200)
@@ -344,7 +344,7 @@ pos: 100 46
 speed: 0 -200
 `);
   });
-  xit("collide from right", () => {
+  it("collide from right", () => {
     const player = {
       box: new Box(new Vector(99, 46), 20, 20),
       speed: new Vector(200, -200)

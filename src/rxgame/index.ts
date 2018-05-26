@@ -74,7 +74,7 @@ const speed$ = flyd.scan(
         case "ArrowRight":
           return vec(200, 0);
         case "ArrowUp":
-          return vec(vx, -200);
+          return vec(vx, -300);
         default:
           return speed;
       }

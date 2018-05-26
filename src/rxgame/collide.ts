@@ -3,6 +3,7 @@ import { Entity } from "./fabric";
 import { minBy, sortBy, max, maxBy, always } from "ramda";
 import { abs } from "./utils";
 import { Player } from "./index";
+import { swapN } from './swap';
 
 const findDx = (box1: Box, box2: Box) => {
   const [leftBox, rightBox] = sortBy(box => box.pos.x, [box1, box2]);
@@ -81,7 +82,12 @@ export const adjustPlayer = (player: Player, boxes: Box[]) => {
   const newPos = player.box.pos.clone();
   const newSpeed = player.speed.clone();
 
-  const { isCollided, overlapN, overlapV } = collideN(player.box, ...boxes);
+  const { collided } = collideN(player.box, ...boxes);
+
+  const swapped = swapN(collided);
+
+  const { isCollided, overlapN, overlapV } = collideN(player.box, ...swapped);
+
   if (isCollided) {
     newPos.copy(newPos.sub(overlapV));
     const overlapNToSpeed = (overlap: number) => (abs(overlap) >= 1 ? 0 : 1);
