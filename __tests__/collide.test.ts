@@ -52,11 +52,12 @@ describe("collideN", () => {
       new Box(new Vector(81, 0), 20, 20),
       new Box(new Vector(81, 20), 20, 20)
     ];
-    const { overlapN, overlapV, isCollided } = collideN(sourceBox, ...blocks);
+    const { overlapN, overlapV, isCollided, collided } = collideN(sourceBox, ...blocks);
     expect(overlapV.x).toBe(-1);
     expect(overlapV.y).toBe(0);
     expect(overlapN.x).toBe(-1);
     expect(overlapN.y).toBe(-1);
+    expect(collided.length).toBe(1)
     expect(isCollided).toBeTruthy();
   });
   it("should collided with upper blocks", () => {
@@ -65,11 +66,12 @@ describe("collideN", () => {
       new Box(new Vector(400, 260), 20, 20),
       new Box(new Vector(420, 260), 20, 20)
     ];
-    const { overlapN, overlapV, isCollided } = collideN(sourceBox, ...blocks);
+    const { overlapN, overlapV, isCollided, collided } = collideN(sourceBox, ...blocks);
     expect(overlapV.x).toBe(0);
     expect(overlapV.y).toBe(-2);
     expect(overlapN.x).toBe(0);
     expect(overlapN.y).toBe(-1);
+    expect(collided.length).toBe(2)
     expect(isCollided).toBeTruthy();
   });
 });
@@ -332,8 +334,6 @@ speed: 200 0
     const box1 = new Box(new Vector(120, 45), 20, 20);
     const box2 = new Box(new Vector(120, 65), 20, 20);
 
-    const { overlapN, overlapV, isCollided } = collideN(player.box, box1, box2);
-
     const { box, speed } = adjustPlayer(player as Player, [box1, box2]);
 
     expect(`
@@ -351,8 +351,6 @@ speed: 0 -200
     };
     const box1 = new Box(new Vector(80, 45), 20, 20);
     const box2 = new Box(new Vector(80, 65), 20, 20);
-
-    const { overlapN, overlapV, isCollided } = collideN(player.box, box1, box2);
 
     const { box, speed } = adjustPlayer(player as Player, [box1, box2]);
 
