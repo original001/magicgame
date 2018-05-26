@@ -1,6 +1,7 @@
 import { Box, Vector, testPolygonPolygon, Response } from "sat";
 import { Entity } from "../src/rxgame/fabric";
-import { collideN, onGround, collide } from "../src/rxgame/collide";
+import { collideN, onGround, collide, sumOverlap , adjustPlayer } from "../src/rxgame/collide";
+import { Player } from "../src/rxgame/index";
 
 const blockMarkup = {
   id: 1,
@@ -12,15 +13,9 @@ const blockMarkup = {
 describe("collideN", () => {
   it("shouldn't collided", () => {
     const sourceBox = new Box(new Vector(100, 0), 20, 20);
-    const blocks: Entity[] = [
-      {
-        ...blockMarkup,
-        box: new Box(new Vector(90, 20), 20, 20)
-      },
-      {
-        ...blockMarkup,
-        box: new Box(new Vector(110, 20), 20, 20)
-      }
+    const blocks = [
+      new Box(new Vector(90, 20), 20, 20),
+      new Box(new Vector(110, 20), 20, 20)
     ];
     const { overlapN, overlapV, isCollided } = collideN(sourceBox, ...blocks);
     expect(overlapV.x).toBe(0);
@@ -29,15 +24,9 @@ describe("collideN", () => {
   });
   it("should collided in same axis", () => {
     const sourceBox = new Box(new Vector(100, 0), 20, 21);
-    const blocks: Entity[] = [
-      {
-        ...blockMarkup,
-        box: new Box(new Vector(90, 20), 20, 20)
-      },
-      {
-        ...blockMarkup,
-        box: new Box(new Vector(110, 20), 20, 20)
-      }
+    const blocks = [
+      new Box(new Vector(90, 20), 20, 20),
+      new Box(new Vector(110, 20), 20, 20)
     ];
     const { overlapN, overlapV, isCollided } = collideN(sourceBox, ...blocks);
     expect(overlapV.x).toBe(0);
@@ -46,15 +35,9 @@ describe("collideN", () => {
   });
   it("should collided in different axis", () => {
     const sourceBox = new Box(new Vector(100, 0), 20, 20);
-    const blocks: Entity[] = [
-      {
-        ...blockMarkup,
-        box: new Box(new Vector(83, 0), 20, 20)
-      },
-      {
-        ...blockMarkup,
-        box: new Box(new Vector(100, 15), 20, 20)
-      }
+    const blocks = [
+      new Box(new Vector(83, 0), 20, 20),
+      new Box(new Vector(100, 15), 20, 20)
     ];
     const { overlapN, overlapV, isCollided } = collideN(sourceBox, ...blocks);
     expect(overlapV.x).toBe(-3);
@@ -63,23 +46,30 @@ describe("collideN", () => {
     expect(overlapN.y).toBe(1);
     expect(isCollided).toBeTruthy();
   });
-  it("should collided in same horizontal axis", () => {
+  xit("should collided in same horizontal axis", () => {
     const sourceBox = new Box(new Vector(100, 0), 20, 20);
-    const blocks: Entity[] = [
-      {
-        ...blockMarkup,
-        box: new Box(new Vector(81, 0), 20, 20)
-      },
-      {
-        ...blockMarkup,
-        box: new Box(new Vector(81, 20), 20, 20)
-      }
+    const blocks = [
+      new Box(new Vector(81, 0), 20, 20),
+      new Box(new Vector(81, 20), 20, 20)
     ];
     const { overlapN, overlapV, isCollided } = collideN(sourceBox, ...blocks);
     expect(overlapV.x).toBe(-1);
     expect(overlapV.y).toBe(0);
     expect(overlapN.x).toBe(-1);
     expect(overlapN.y).toBe(0);
+    expect(isCollided).toBeTruthy();
+  });
+  xit("should collided with upper blocks", () => {
+    const sourceBox = new Box(new Vector(403.2, 278.4), 20, 20);
+    const blocks = [
+      new Box(new Vector(400, 260), 20, 20),
+      new Box(new Vector(420, 260), 20, 20)
+    ];
+    const { overlapN, overlapV, isCollided } = collideN(sourceBox, ...blocks);
+    expect(overlapV.x).toBe(0);
+    expect(overlapV.y).toBe(1.6);
+    expect(overlapN.x).toBe(0);
+    expect(overlapN.y).toBe(1);
     expect(isCollided).toBeTruthy();
   });
 });
@@ -98,6 +88,7 @@ describe("onGround", () => {
       }
     ];
     const isOnGround = onGround(sourceBox, blocks);
+    const { overlapN, dx } = collide(sourceBox, blocks[0].box);
     expect(isOnGround).toBeTruthy();
   });
   it("should return false if box overlaps under blocks", () => {
@@ -127,8 +118,6 @@ describe("onGround", () => {
         box: new Box(new Vector(100, 20), 20, 20)
       }
     ];
-    const { overlapN, overlapV, isCollided } = collideN(sourceBox, blocks[1]);
-    console.log(overlapN, overlapV, isCollided);
     const isOnGround = onGround(sourceBox, blocks);
     expect(isOnGround).toBeTruthy();
   });
@@ -172,6 +161,21 @@ describe("onGround", () => {
       {
         ...blockMarkup,
         box: new Box(new Vector(83, 20), 20, 20)
+      }
+    ];
+    const isOnGround = onGround(sourceBox, blocks);
+    expect(isOnGround).toBeFalsy();
+  });
+  it("should return false near two upper blocks", () => {
+    const sourceBox = new Box(new Vector(100, 20), 20, 20);
+    const blocks: Entity[] = [
+      {
+        ...blockMarkup,
+        box: new Box(new Vector(90, 0), 20, 20)
+      },
+      {
+        ...blockMarkup,
+        box: new Box(new Vector(100, 0), 20, 20)
       }
     ];
     const isOnGround = onGround(sourceBox, blocks);
@@ -261,8 +265,103 @@ isCollided: ${isCollided}
 `).toBe(`
 N: 0, -1
 V: 0, 0
-delta: 0, 0
+delta: 20, 0
 isCollided: false
+`);
+  });
+});
+
+describe("sumOverlapV", () => {
+  it("should work on different axis", () => {
+    const { x, y } = sumOverlap(new Vector(1, -2), new Vector(2, 0));
+    expect(x).toBe(2);
+    expect(y).toBe(-2);
+  });
+});
+
+describe("sumOverlapN", () => {
+  it("should work on different axis", () => {
+    const { x, y } = sumOverlap(new Vector(1, -1), new Vector(1, 0));
+    expect(x).toBe(1);
+    expect(y).toBe(-1);
+  });
+});
+
+describe("adjustPosition", () => {
+  it("collide from bottom", () => {
+    const player = {
+      box: new Box(new Vector(100, 1), 20, 20),
+      speed: new Vector(200, -200)
+    };
+    const box1 = new Box(new Vector(110, 20), 20, 20);
+    const box2 = new Box(new Vector(90, 20), 20, 20);
+
+    const { box, speed } = adjustPlayer(player as Player, [box1, box2]);
+
+    expect(`
+pos: ${box.pos.x} ${box.pos.y}
+speed: ${speed.x} ${speed.y}
+`).toBe(`
+pos: 100 0
+speed: 200 0
+`);
+  });
+  it("collide from top", () => {
+    const player = {
+      box: new Box(new Vector(100, 39), 20, 20),
+      speed: new Vector(200, -200)
+    };
+    const box1 = new Box(new Vector(110, 20), 20, 20);
+    const box2 = new Box(new Vector(90, 20), 20, 20);
+
+    const { box, speed } = adjustPlayer(player as Player, [box1, box2]);
+
+    expect(`
+pos: ${box.pos.x} ${box.pos.y}
+speed: ${speed.x} ${speed.y}
+`).toBe(`
+pos: 100 40
+speed: 200 0
+`);
+  });
+  xit("collide from right", () => {
+    const player = {
+      box: new Box(new Vector(101, 46), 20, 20),
+      speed: new Vector(200, -200)
+    };
+    const box1 = new Box(new Vector(120, 45), 20, 20);
+    const box2 = new Box(new Vector(120, 65), 20, 20);
+
+    const { overlapN, overlapV, isCollided } = collideN(player.box, box1, box2);
+
+    const { box, speed } = adjustPlayer(player as Player, [box1, box2]);
+
+    expect(`
+pos: ${box.pos.x} ${box.pos.y}
+speed: ${speed.x} ${speed.y}
+`).toBe(`
+pos: 100 46
+speed: 0 -200
+`);
+  });
+  xit("collide from right", () => {
+    const player = {
+      box: new Box(new Vector(99, 46), 20, 20),
+      speed: new Vector(200, -200)
+    };
+    const box1 = new Box(new Vector(80, 45), 20, 20);
+    const box2 = new Box(new Vector(80, 65), 20, 20);
+
+    const { overlapN, overlapV, isCollided } = collideN(player.box, box1, box2);
+
+    const { box, speed } = adjustPlayer(player as Player, [box1, box2]);
+
+    expect(`
+pos: ${box.pos.x} ${box.pos.y}
+speed: ${speed.x} ${speed.y}
+`).toBe(`
+pos: 100 46
+speed: 0 -200
 `);
   });
 });

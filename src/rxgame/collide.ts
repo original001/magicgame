@@ -1,6 +1,8 @@
 import { Box, Vector, testPolygonPolygon, Response } from "sat";
 import { Entity } from "./fabric";
-import { minBy, sortBy, max } from "ramda";
+import { minBy, sortBy, max, maxBy, always } from "ramda";
+import { abs } from "./utils";
+import { Player } from "./index";
 
 const findDx = (box1: Box, box2: Box) => {
   const [leftBox, rightBox] = sortBy(box => box.pos.x, [box1, box2]);
@@ -12,74 +14,83 @@ const findDy = (box1: Box, box2: Box) => {
   return max(topBox.pos.y + topBox.h - bottomBox.pos.y, 0);
 };
 
+const rewrite = (val: number, override: number) => (val === 0 ? override : val);
+
+export const sumOverlap = (
+  { x: x1, y: y1 }: Vector,
+  { x: x2, y: y2 }: Vector
+) => {
+  return new Vector(maxBy(n => abs(n), x1, x2), maxBy(n => abs(n), y1, y2));
+};
+
 export const collide = (box1: Box, box2: Box) => {
   const res = new Response();
-  const isCollided = testPolygonPolygon(
-    box1.toPolygon(),
-    box2.toPolygon(),
-    res
-  ) && !(res.overlapV.x === 0 && res.overlapV.y === 0);
+  const isCollided =
+    testPolygonPolygon(box1.toPolygon(), box2.toPolygon(), res) &&
+    !(res.overlapV.x === 0 && res.overlapV.y === 0);
 
   return {
     overlapN: res.overlapN,
     overlapV: res.overlapV,
     isCollided,
-    dx: isCollided ? findDx(box1, box2) : 0,
-    dy: isCollided ? findDy(box1, box2) : 0
-  }
+    dx: findDx(box1, box2),
+    dy: findDy(box1, box2)
+  };
 };
 
-export const collideN = (sourceBox: Box, ...entities: Entity[]) => {
+export const collideN = (sourceBox: Box, ...boxes: Box[]) => {
   const initialVectors = {
     overlapN: new Vector(),
-    overlapV: new Vector()
+    overlapV: new Vector(),
+    isCollided: false,
+    collided: [] as Box[]
   };
-  const collidedBoxes = entities.filter(entity => {
-    const res = new Response();
-    const isCollided = testPolygonPolygon(
-      sourceBox.toPolygon(),
-      entity.box.toPolygon(),
-      res
-    );
-    return isCollided && !(res.overlapV.x === 0 && res.overlapV.y === 0);
-  });
 
-  const rewrite = (val: number, override: number) =>
-    val === 0 ? override : val;
-
-  const sumOverlap = (acc: Vector, val: Vector) =>
-    new Vector(rewrite(acc.x, val.x), rewrite(acc.y, val.y));
-
-  const vectors = collidedBoxes.reduce(({ overlapN, overlapV }, entity) => {
-    const res = new Response();
-    testPolygonPolygon(sourceBox.toPolygon(), entity.box.toPolygon(), res);
-    const newVector = {
+  const vectors = boxes.reduce((vectors, box) => {
+    const { overlapV, overlapN, isCollided, collided } = vectors;
+    const res = collide(sourceBox, box);
+    return {
+      overlapV: sumOverlap(overlapV, res.overlapV),
       overlapN: sumOverlap(overlapN, res.overlapN),
-      overlapV: sumOverlap(overlapV, res.overlapV)
+      isCollided: isCollided || res.isCollided,
+      collided: collided.concat(box)
     };
-    return newVector;
   }, initialVectors);
 
-  const isCollided = collidedBoxes.length > 0;
-
-  return {
-    isCollided,
-    ...vectors
-  };
+  return vectors;
 };
 
 const cloneBox = ({ pos, w, h }: Box) =>
   new Box(new Vector(pos.x, pos.y), w, h);
 
 export const onGround = (box: Box, terrains: Entity[]) => {
-  const testBox1 = cloneBox(box);
-  testBox1.pos.y += 1;
-  const testBox2 = cloneBox(box);
-  testBox2.pos.y += box.h;
-  return terrains.some(
-    terrain =>
-      collideN(testBox1, terrain).overlapV.y === 1 &&
-      (Math.abs(collideN(testBox2, terrain).overlapV.x) > 4 ||
-        collideN(testBox2, terrain).overlapV.y === 20)
-  );
+  return terrains.some(terrain => {
+    const { overlapN, overlapV, dx } = collide(box, terrain.box);
+    return (
+      overlapN.y === -1 &&
+      overlapV.y === 0 &&
+      box.pos.y < terrain.box.pos.y &&
+      dx >= 4
+    );
+  });
+};
+
+const sign = (num: number) => num / abs(num);
+
+export const adjustPlayer = (player: Player, boxes: Box[]) => {
+  const newPos = player.box.pos.clone();
+  const newSpeed = player.speed.clone();
+
+  const { isCollided, overlapN, overlapV } = collideN(player.box, ...boxes);
+  if (isCollided) {
+    newPos.copy(newPos.sub(overlapV));
+    const overlapNToSpeed = (overlap: number) => (abs(overlap) >= 1 ? 0 : 1);
+    newSpeed.copy(
+      newSpeed.scale(overlapNToSpeed(overlapN.x), overlapNToSpeed(overlapN.y))
+    );
+  }
+  return {
+    box: new Box(newPos, player.box.w, player.box.h),
+    speed: newSpeed
+  };
 };

@@ -2,11 +2,11 @@ import * as flyd from "flyd";
 import { Vector, Box, Response, testPolygonPolygon } from "sat";
 import withLatestFrom from "flyd-withlatestfrom";
 import { MyMap } from "../../maps/map";
-import { parseData , getCoordsFromList } from "./parseData";
+import { parseData, getCoordsFromList } from "./parseData";
 import { createObjectByTexId, fromEntity, Entity } from "./fabric";
 import { fromTexture } from "../newgame/fabric";
 import { contains } from "ramda";
-import { collideN , onGround } from './collide';
+import { collideN, onGround, adjustPlayer } from "./collide";
 const map: MyMap = require("../../maps/map.json");
 
 const parsedMap = parseData(map);
@@ -17,7 +17,11 @@ const initedMap = parsedMap.map(([id, box]) =>
 
 const playerEntity = initedMap.find(entity => entity.texture.stat === 160);
 
-const player = {
+export type Player = Entity & {
+  speed: Vector;
+};
+
+const player: Player = {
   ...playerEntity,
   speed: new Vector()
 };
@@ -36,7 +40,7 @@ const abs = Math.abs;
 window.addEventListener("keydown", keydown);
 window.addEventListener("keyup", keyup);
 
-const img = document.getElementById('img') as HTMLImageElement;
+const img = document.getElementById("img") as HTMLImageElement;
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
@@ -70,7 +74,7 @@ const speed$ = flyd.scan(
         case "ArrowRight":
           return vec(200, 0);
         case "ArrowUp":
-          return vec(vx, -300);
+          return vec(vx, -200);
         default:
           return speed;
       }
@@ -95,9 +99,9 @@ const moving$ = flyd.scan(
   (player, [timeDelta, { x: speedX, y: speedY }]) => {
     const { speed, box } = player;
     const { x, y } = box.pos;
-    const inAir = !onGround(player.box, terrains);
+    const isOnGround = onGround(player.box, terrains);
     const newSpeedX = speedX;
-    const newSpeedY = inAir ? speed.y + G : speedY;
+    const newSpeedY = isOnGround ? speedY : speed.y + G;
     const newPlayer = {
       box: new Box(
         new Vector(x + newSpeedX * timeDelta, y + newSpeedY * timeDelta),
@@ -105,20 +109,15 @@ const moving$ = flyd.scan(
         box.h
       ),
       speed: new Vector(newSpeedX, newSpeedY)
-    };
-    const { overlapN, overlapV, isCollided } = collideN(
-      newPlayer.box,
-      ...terrains
-    );
-    if (isCollided) {
-      newPlayer.box.pos.sub(overlapV);
-      const overlapNToSpeed = (overlap: number) => (abs(overlap) >= 1 ? 0 : 1);
-      newPlayer.speed.scale(
-        overlapNToSpeed(overlapN.x),
-        overlapNToSpeed(overlapN.y)
-      );
+    } as Player;
+    const adjustedNewPlayer = adjustPlayer(newPlayer, terrains.map(t => t.box));
+    if (player.box.pos.y < 320) {
+      console.log("is onGround: " + isOnGround);
+      console.log("player: " + player.box.pos);
+      console.log("newplayer: " + newPlayer.box.pos);
+      console.log("adjustedplayer: " + adjustedNewPlayer.box.pos);
     }
-    return newPlayer;
+    return adjustedNewPlayer;
   },
   player,
   withLatestFrom([speed$], updating$) as flyd.Stream<[number, Vector]>
@@ -131,12 +130,12 @@ flyd.on(state => {
   ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
   ctx.fillStyle = "#333";
   ctx.fillRect(pos.x, pos.y, w, h);
-  terrains.forEach(({ box: {pos: {x, y}, w, h}, texture, id }) => {
+  terrains.forEach(({ box: { pos: { x, y }, w, h }, texture, id }) => {
     // const coord = getCoordsFromList(texture.stat, 16);
     // ctx.drawImage(img, coord.x * 20, coord.y * 20, 20, 20, x, y, w, h)
     ctx.fillStyle = "#666";
     ctx.fillRect(x, y, w, h);
-    ctx.fillStyle = "#fff";
-    ctx.fillText(id.toString(), x + 5, y + 5)
+    // ctx.fillStyle = "#fff";
+    // ctx.fillText(id.toString(), x + 5, y + 5)
   });
 }, moving$);
