@@ -103,6 +103,7 @@ const moving$ = flyd.scan(
     const newSpeedX = speedX;
     const newSpeedY = isOnGround ? speedY : speed.y + G;
     const newPlayer = {
+      ...player,
       box: new Box(
         new Vector(x + newSpeedX * timeDelta, y + newSpeedY * timeDelta),
         box.w,
@@ -119,19 +120,20 @@ const moving$ = flyd.scan(
   withLatestFrom([speed$], updating$) as flyd.Stream<[number, Vector]>
 );
 
-flyd.on(state => {
-  const { box: { pos, w, h } } = state;
+flyd.on(player => {
   ctx.font = "10px Arial";
   ctx.fillStyle = "#abd5fc";
   ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
-  ctx.fillStyle = "#333";
-  ctx.fillRect(pos.x, pos.y, w, h);
-  terrains.forEach(({ box: { pos: { x, y }, w, h }, texture, id }) => {
-    // const coord = getCoordsFromList(texture.stat, 16);
-    // ctx.drawImage(img, coord.x * 20, coord.y * 20, 20, 20, x, y, w, h)
-    ctx.fillStyle = "#666";
-    ctx.fillRect(x, y, w, h);
-    // ctx.fillStyle = "#fff";
-    // ctx.fillText(id.toString(), x + 5, y + 5)
+  const center = new Vector(canvas.width/2, canvas.height*2/3);
+  [player, ...terrains].forEach(({ box: { pos, w, h }, texture, id }) => {
+      const x = pos.x + center.x - player.box.pos.x;
+      const y = pos.y + center.y - player.box.pos.y;
+      ctx.fillStyle = '#fff';
+      const coord = getCoordsFromList(texture.stat, 16);
+      if (texture.stat > 0) {
+        ctx.drawImage(img, coord.x * 20, coord.y * 20, 20, 20, x, y, w, h)
+      } else {
+        ctx.fillRect(x, y, w, h);
+      }
   });
 }, moving$);

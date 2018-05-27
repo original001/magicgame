@@ -94,8 +94,9 @@ export const adjustPlayer = (player: Player, boxes: Box[]) => {
     newSpeed.scale(overlapNToSpeed(overlapN.x), overlapNToSpeed(overlapN.y));
 
     return {
+      ...player,
       box: new Box(newPos, player.box.w, player.box.h),
-      speed: newSpeed
+      speed: newSpeed,
     };
   }
   return player;
