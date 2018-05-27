@@ -7,6 +7,7 @@ import { fromEntity, Entity } from "./fabric";
 import { fromTexture } from "../newgame/fabric";
 import { contains, apply } from "ramda";
 import { collideN, onGround, adjustPlayer } from "./collide";
+import { vec, sign } from "./utils";
 const map: MyMap = require("../../maps/map.json");
 
 const mapsBoxes = getBoxes(map);
@@ -16,12 +17,14 @@ const initedMap = mapsBoxes.map(apply(fromEntity));
 const playerEntity = initedMap.find(entity => entity.texture === 160);
 
 export type Player = Entity & {
-  speed: Vector;
+  speed: Vector,
+  dir: Vector
 };
 
 const player: Player = {
   ...playerEntity,
-  speed: new Vector()
+  speed: vec(),
+  dir: vec(1, 0)
 };
 
 const terrains = initedMap.filter(entity =>
@@ -32,23 +35,12 @@ const keydown = flyd.stream<KeyboardEvent>();
 const keyup = flyd.stream<KeyboardEvent>();
 const G = 9.8;
 
-const vec = (x: number, y: number) => new Vector(x, y);
-const abs = Math.abs;
-
 window.addEventListener("keydown", keydown);
 window.addEventListener("keyup", keyup);
 
 const img = document.getElementById("img") as HTMLImageElement;
-
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
-ctx.fillStyle = "#abd5fc";
-ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
-
-interface State {
-  box: Box;
-  speed: Vector;
-}
 
 const updating$ = flyd.stream<number>();
 
@@ -109,10 +101,13 @@ const moving$ = flyd.scan(
       ),
       speed: new Vector(newSpeedX, newSpeedY)
     } as Player;
-    const adjustedNewPlayer = adjustPlayer(newPlayer, terrains.map(t => t.box));
+    const adjustedPlayer = adjustPlayer(newPlayer, terrains.map(t => t.box));
     if (player.box.pos.y < 320) {
     }
-    return adjustedNewPlayer;
+    return {
+      ...adjustedPlayer,
+      dir: vec(sign(adjustedPlayer.speed.x), sign(adjustedPlayer.speed.y)),
+    }
   },
   player,
   withLatestFrom([speed$], updating$) as flyd.Stream<[number, Vector]>
@@ -122,16 +117,16 @@ flyd.on(player => {
   ctx.font = "10px Arial";
   ctx.fillStyle = "#abd5fc";
   ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
-  const center = new Vector(canvas.width/2, canvas.height*2/3);
+  const center = new Vector(canvas.width / 2, canvas.height * 2 / 3);
   [player, ...terrains].forEach(({ box: { pos, w, h }, texture, id }) => {
-      const x = pos.x + center.x - player.box.pos.x;
-      const y = pos.y + center.y - player.box.pos.y;
-      ctx.fillStyle = '#fff';
-      const coord = getCoordsFromList(texture, 16);
-      if (texture > 0) {
-        ctx.drawImage(img, coord.x * 20, coord.y * 20, 20, 20, x, y, w, h)
-      } else {
-        ctx.fillRect(x, y, w, h);
-      }
+    const x = pos.x + center.x - player.box.pos.x;
+    const y = pos.y + center.y - player.box.pos.y;
+    ctx.fillStyle = "#fff";
+    const coord = getCoordsFromList(texture, 16);
+    if (texture > 0) {
+      ctx.drawImage(img, coord.x * 20, coord.y * 20, 20, 20, x, y, w, h);
+    } else {
+      ctx.fillRect(x, y, w, h);
+    }
   });
 }, moving$);

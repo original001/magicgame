@@ -1,7 +1,7 @@
 import { Box, Vector, testPolygonPolygon, Response } from "sat";
 import { Entity } from "./fabric";
 import { minBy, sortBy, max, maxBy, always } from "ramda";
-import { abs } from "./utils";
+import { abs , vec, sign } from "./utils";
 import { Player } from "./index";
 import { swapN } from "./swap";
 
@@ -26,16 +26,22 @@ export const sumOverlap = (
 
 export const collide = (box1: Box, box2: Box) => {
   const res = new Response();
+  const {overlapN, overlapV} = res;
   const isCollided =
     testPolygonPolygon(box1.toPolygon(), box2.toPolygon(), res) &&
-    !(res.overlapV.x === 0 && res.overlapV.y === 0);
+    !(overlapV.x === 0 && overlapV.y === 0);
 
   return {
-    overlapN: res.overlapN,
-    overlapV: res.overlapV,
+    overlapN,
+    overlapV,
     isCollided,
     dx: findDx(box1, box2),
-    dy: findDy(box1, box2)
+    dy: findDy(box1, box2),
+    onGround:
+      overlapN.y === -1 &&
+      overlapV.y === 0 &&
+      box1.pos.y < box2.pos.y &&
+      findDx(box1, box2) > 0
   };
 };
 
@@ -44,17 +50,19 @@ export const collideN = (sourceBox: Box, ...boxes: Box[]) => {
     overlapN: new Vector(),
     overlapV: new Vector(),
     isCollided: false,
-    collided: [] as Box[]
+    collided: [] as Box[],
+    onGround: false,
   };
 
   const vectors = boxes.reduce((vectors, box) => {
-    const { overlapV, overlapN, isCollided, collided } = vectors;
+    const { overlapV, overlapN, isCollided, collided, onGround } = vectors;
     const res = collide(sourceBox, box);
     return {
       overlapV: sumOverlap(overlapV, res.overlapV),
       overlapN: sumOverlap(overlapN, res.overlapN),
       isCollided: isCollided || res.isCollided,
-      collided: res.isCollided ? collided.concat(box) : collided
+      collided: res.isCollided ? collided.concat(box) : collided,
+      onGround: onGround || res.onGround
     };
   }, initialVectors);
 
@@ -66,17 +74,10 @@ const cloneBox = ({ pos, w, h }: Box) =>
 
 export const onGround = (sourceBox: Box, boxes: Box[]) => {
   return boxes.some((box) => {
-    const { overlapN, overlapV, dx } = collide(sourceBox, box);
-    return (
-      overlapN.y === -1 &&
-      overlapV.y === 0 &&
-      sourceBox.pos.y < box.pos.y &&
-      dx > 0
-    );
+    const { onGround } = collide(sourceBox, box);
+    return onGround;
   });
 };
-
-const sign = (num: number) => num / abs(num);
 
 const overlapNToSpeed = (overlap: number) => (abs(overlap) >= 1 ? 0 : 1);
 
