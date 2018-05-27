@@ -64,14 +64,14 @@ export const collideN = (sourceBox: Box, ...boxes: Box[]) => {
 const cloneBox = ({ pos, w, h }: Box) =>
   new Box(new Vector(pos.x, pos.y), w, h);
 
-export const onGround = (box: Box, terrains: Entity[]) => {
-  return terrains.some((terrain) => {
-    const { overlapN, overlapV, dx } = collide(box, terrain.box);
+export const onGround = (sourceBox: Box, boxes: Box[]) => {
+  return boxes.some((box) => {
+    const { overlapN, overlapV, dx } = collide(sourceBox, box);
     return (
       overlapN.y === -1 &&
       overlapV.y === 0 &&
-      box.pos.y < terrain.box.pos.y &&
-      dx >= 4
+      sourceBox.pos.y < box.pos.y &&
+      dx > 0
     );
   });
 };

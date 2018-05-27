@@ -81,9 +81,9 @@ const speed$ = flyd.scan(
     } else {
       switch (code) {
         case "ArrowLeft":
+          return vec(vx > 0 ? vx : 0, 0);
         case "ArrowRight":
-          //todo: note previous direction
-          return vec(0, 0);
+          return vec(vx < 0 ? vx : 0, 0);
         case "ArrowUp":
           return vec(vx, 0);
         default:
@@ -99,7 +99,7 @@ const moving$ = flyd.scan(
   (player, [timeDelta, { x: speedX, y: speedY }]) => {
     const { speed, box } = player;
     const { x, y } = box.pos;
-    const isOnGround = onGround(player.box, terrains);
+    const isOnGround = onGround(player.box, terrains.map(t => t.box));
     const newSpeedX = speedX;
     const newSpeedY = isOnGround ? speedY : speed.y + G;
     const newPlayer = {
@@ -112,13 +112,6 @@ const moving$ = flyd.scan(
     } as Player;
     const adjustedNewPlayer = adjustPlayer(newPlayer, terrains.map(t => t.box));
     if (player.box.pos.y < 320) {
-      // console.log("is onGround: " + isOnGround);
-      // console.log("player: " + player.box.pos);
-      // console.log("newplayer: " + newPlayer.box.pos);
-      // console.log("adjustedplayer: " + adjustedNewPlayer.box.pos);
-      // console.log("player: " + player.speed);
-      // console.log("newplayer: " + newPlayer.speed);
-      // console.log("adjustedplayer: " + adjustedNewPlayer.speed);
     }
     return adjustedNewPlayer;
   },
