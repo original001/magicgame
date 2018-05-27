@@ -38,4 +38,14 @@ interface TileSet {
   tileproperties: { [id: string]: { instance: number } };
   tilepropertytypes: { [id: string]: { instance: string } };
   tilewidth: number;
+  tiles: {
+    [id: string]: {
+      animation: Animation[];
+    };
+  };
+}
+
+interface Animation {
+  duration: number;
+  tileid: number;
 }

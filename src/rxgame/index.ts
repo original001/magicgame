@@ -2,20 +2,18 @@ import * as flyd from "flyd";
 import { Vector, Box, Response, testPolygonPolygon } from "sat";
 import withLatestFrom from "flyd-withlatestfrom";
 import { MyMap } from "../../maps/map";
-import { parseData, getCoordsFromList } from "./parseData";
-import { createObjectByTexId, fromEntity, Entity } from "./fabric";
+import { getBoxes, getCoordsFromList } from "./parseData";
+import { fromEntity, Entity } from "./fabric";
 import { fromTexture } from "../newgame/fabric";
-import { contains } from "ramda";
+import { contains, apply } from "ramda";
 import { collideN, onGround, adjustPlayer } from "./collide";
 const map: MyMap = require("../../maps/map.json");
 
-const parsedMap = parseData(map);
+const mapsBoxes = getBoxes(map);
 
-const initedMap = parsedMap.map(([id, box]) =>
-  fromEntity(fromTexture(id), box)
-);
+const initedMap = mapsBoxes.map(apply(fromEntity));
 
-const playerEntity = initedMap.find(entity => entity.texture.stat === 160);
+const playerEntity = initedMap.find(entity => entity.texture === 160);
 
 export type Player = Entity & {
   speed: Vector;
@@ -27,7 +25,7 @@ const player: Player = {
 };
 
 const terrains = initedMap.filter(entity =>
-  contains(entity.texture.stat, [104, 30, 46])
+  contains(entity.texture, [104, 30, 46])
 );
 
 const keydown = flyd.stream<KeyboardEvent>();
@@ -129,8 +127,8 @@ flyd.on(player => {
       const x = pos.x + center.x - player.box.pos.x;
       const y = pos.y + center.y - player.box.pos.y;
       ctx.fillStyle = '#fff';
-      const coord = getCoordsFromList(texture.stat, 16);
-      if (texture.stat > 0) {
+      const coord = getCoordsFromList(texture, 16);
+      if (texture > 0) {
         ctx.drawImage(img, coord.x * 20, coord.y * 20, 20, 20, x, y, w, h)
       } else {
         ctx.fillRect(x, y, w, h);

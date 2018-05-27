@@ -1,4 +1,4 @@
-import { parseData, getCoordsFromList } from "../src/newgame/parseData";
+import { getBoxes, getCoordsFromList } from "../src/rxgame/parseData";
 import { fromModel, fromVector, fromBox } from "../src/newgame/satHelpers";
 import * as SAT from "sat";
 
@@ -43,17 +43,75 @@ describe("parsing map", () => {
         tileheight: 20,
         tileproperties: {},
         tilepropertytypes: {},
-        tilewidth: 20
+        tilewidth: 20,
+        tiles: {
+          "160": {
+            animation: [
+              {
+                duration: 100,
+                tileid: 160
+              },
+              {
+                duration: 100,
+                tileid: 161
+              },
+              {
+                duration: 100,
+                tileid: 162
+              },
+              {
+                duration: 100,
+                tileid: 144
+              },
+              {
+                duration: 100,
+                tileid: 145
+              },
+              {
+                duration: 100,
+                tileid: 146
+              }
+            ]
+          },
+          "230": {
+            animation: [
+              {
+                duration: 100,
+                tileid: 230
+              },
+              {
+                duration: 100,
+                tileid: 231
+              },
+              {
+                duration: 100,
+                tileid: 232
+              },
+              {
+                duration: 100,
+                tileid: 214
+              },
+              {
+                duration: 100,
+                tileid: 215
+              },
+              {
+                duration: 100,
+                tileid: 216
+              }
+            ]
+          }
+        }
       }
     ],
     tilewidth: 20,
     type: "map",
     version: 1,
-    width: 3 
+    width: 3
   };
 
   it("map parsed correctly", () => {
-    const parsedMap = parseData(map);
+    const parsedMap = getBoxes(map);
     expect(parsedMap).toEqual([
       [0, fromBox(20, 0, 20, 20)],
       [1, fromBox(40, 0, 20, 20)],
