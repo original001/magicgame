@@ -1,11 +1,12 @@
 import * as flyd from "flyd";
+import * as every from "flyd/module/every";
 import { Vector, Box, Response, testPolygonPolygon } from "sat";
 import withLatestFrom from "flyd-withlatestfrom";
 import { MyMap } from "../../maps/map";
-import { getBoxes, getCoordsFromList } from "./parseData";
+import { getBoxes, getCoordsFromList , getAnimations } from "./parseData";
 import { fromEntity, Entity } from "./fabric";
 import { fromTexture } from "../newgame/fabric";
-import { contains, apply } from "ramda";
+import { contains, apply, any, equals } from "ramda";
 import { collideN, onGround, adjustPlayer } from "./collide";
 import { vec, sign } from "./utils";
 const map: MyMap = require("../../maps/map.json");
@@ -17,8 +18,8 @@ const initedMap = mapsBoxes.map(apply(fromEntity));
 const playerEntity = initedMap.find(entity => entity.texture === 160);
 
 export type Player = Entity & {
-  speed: Vector,
-  dir: Vector
+  speed: Vector;
+  dir: Vector;
 };
 
 const player: Player = {
@@ -106,11 +107,24 @@ const moving$ = flyd.scan(
     }
     return {
       ...adjustedPlayer,
-      dir: vec(sign(adjustedPlayer.speed.x), sign(adjustedPlayer.speed.y)),
-    }
+      dir: vec(sign(adjustedPlayer.speed.x), sign(adjustedPlayer.speed.y))
+    };
   },
   player,
   withLatestFrom([speed$], updating$) as flyd.Stream<[number, Vector]>
+);
+
+flyd.scan(
+  (currentTexture, player) => {
+    const [r1,r2,r3,l1,l2,l3] = getAnimations(player.texture, map);
+
+    if (any(equals(player.dir.x), [r1,r2,r3])) {
+      return r1
+    }
+    return currentTexture
+  },
+  player.texture,
+  flyd.combine((_, player) => player(), [every(120), moving$])
 );
 
 flyd.on(player => {
