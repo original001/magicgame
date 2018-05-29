@@ -305,7 +305,8 @@ speed: 200 0
   it("collide from right", () => {
     const player = {
       box: new Box(new Vector(101, 46), 20, 20),
-      speed: new Vector(200, -200)
+      speed: new Vector(200, -200),
+      dir: new Vector(0, 0)
     };
     const box1 = new Box(new Vector(120, 45), 20, 20);
     const box2 = new Box(new Vector(120, 65), 20, 20);
@@ -323,7 +324,8 @@ speed: 0 -200
   it("collide from right", () => {
     const player = {
       box: new Box(new Vector(99, 46), 20, 20),
-      speed: new Vector(200, -200)
+      speed: new Vector(200, -200),
+      dir: new Vector(0, 0)
     };
     const box1 = new Box(new Vector(80, 45), 20, 20);
     const box2 = new Box(new Vector(80, 65), 20, 20);

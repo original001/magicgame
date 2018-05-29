@@ -1,14 +1,21 @@
 import * as flyd from "flyd";
-import * as every from "flyd/module/every";
+import every from "flyd/module/every";
+import lift from "flyd/module/lift";
+import filter from "flyd/module/filter";
+import scanmerge from "flyd/module/scanmerge";
+import mergeall from "flyd/module/mergeall";
 import { Vector, Box, Response, testPolygonPolygon } from "sat";
 import withLatestFrom from "flyd-withlatestfrom";
+import buffer from "flyd-buffercount";
+import zip from "flyd-zip";
 import { MyMap } from "../../maps/map";
-import { getBoxes, getCoordsFromList , getAnimations } from "./parseData";
+import { getBoxes, getCoordsFromList, getAnimations } from "./parseData";
 import { fromEntity, Entity } from "./fabric";
 import { fromTexture } from "../newgame/fabric";
-import { contains, apply, any, equals } from "ramda";
+import { contains, apply, any, equals, indexOf, curryN, inc } from "ramda";
 import { collideN, onGround, adjustPlayer } from "./collide";
-import { vec, sign } from "./utils";
+import { vec, sign, next, isVectorsEq } from "./utils";
+import { nextTexture, getAnimationState } from "./animations";
 const map: MyMap = require("../../maps/map.json");
 
 const mapsBoxes = getBoxes(map);
@@ -16,17 +23,28 @@ const mapsBoxes = getBoxes(map);
 const initedMap = mapsBoxes.map(apply(fromEntity));
 
 const playerEntity = initedMap.find(entity => entity.texture === 160);
+const enemyEntities = initedMap.filter(entity => entity.texture === 230);
 
-export type Player = Entity & {
+export type Creature = Entity & {
   speed: Vector;
   dir: Vector;
 };
 
-const player: Player = {
+export type Player = Creature;
+
+export type Enemy = Creature;
+
+const initialPlayer: Player = {
   ...playerEntity,
   speed: vec(),
   dir: vec(1, 0)
 };
+
+const initialEnemies = enemyEntities.map(enemy => ({
+  ...enemy,
+  speed: vec(),
+  dir: vec(1, 0)
+} as Enemy));
 
 const terrains = initedMap.filter(entity =>
   contains(entity.texture, [104, 30, 46])
@@ -55,7 +73,7 @@ const update = time => {
 
 update(_spendTime);
 
-const speed$ = flyd.scan(
+const arrows$ = flyd.scan(
   (speed, { type, code }) => {
     const { x: vx, y: vy } = speed;
     if (type === "keydown") {
@@ -86,61 +104,89 @@ const speed$ = flyd.scan(
   flyd.merge(keydown, keyup)
 );
 
-const moving$ = flyd.scan(
-  (player, [timeDelta, { x: speedX, y: speedY }]) => {
-    const { speed, box } = player;
-    const { x, y } = box.pos;
-    const isOnGround = onGround(player.box, terrains.map(t => t.box));
-    const newSpeedX = speedX;
-    const newSpeedY = isOnGround ? speedY : speed.y + G;
-    const newPlayer = {
-      ...player,
-      box: new Box(
-        new Vector(x + newSpeedX * timeDelta, y + newSpeedY * timeDelta),
-        box.w,
-        box.h
-      ),
-      speed: new Vector(newSpeedX, newSpeedY)
-    } as Player;
+const animationInterval$ = flyd.scan(inc, 0, every(120));
+
+const nextPlayerTexture = nextTexture(getAnimations(160, map));
+const nextEnemyTexture = nextTexture(getAnimations(230, map));
+
+const nextPosition = (
+  creature: Creature,
+  timeDelta,
+  { x: speedX, y: speedY }
+): Creature => {
+  const { speed, box } = creature;
+  const { x, y } = box.pos;
+  const isOnGround = onGround(creature.box, terrains.map(t => t.box));
+  const newSpeedX = speedX;
+  const newSpeedY = isOnGround ? speedY : speed.y + G;
+  const newCreature = {
+    ...creature,
+    box: new Box(
+      new Vector(x + newSpeedX * timeDelta, y + newSpeedY * timeDelta),
+      box.w,
+      box.h
+    ),
+    speed: new Vector(newSpeedX, newSpeedY)
+  };
+  return newCreature;
+};
+
+const playerMoving$ = flyd.scan(
+  (player, [timeDelta, speed, interval]) => {
+    const newPlayer = nextPosition(player, timeDelta, speed);
     const adjustedPlayer = adjustPlayer(newPlayer, terrains.map(t => t.box));
-    if (player.box.pos.y < 320) {
-    }
     return {
       ...adjustedPlayer,
-      dir: vec(sign(adjustedPlayer.speed.x), sign(adjustedPlayer.speed.y))
+      texture: nextPlayerTexture(
+        getAnimationState(adjustedPlayer.dir, adjustedPlayer.speed),
+        interval
+      )
     };
   },
-  player,
-  withLatestFrom([speed$], updating$) as flyd.Stream<[number, Vector]>
+  initialPlayer,
+  withLatestFrom([arrows$, animationInterval$], updating$) as flyd.Stream<
+    [number, Vector, number]
+  >
 );
 
-flyd.scan(
-  (currentTexture, player) => {
-    const [r1,r2,r3,l1,l2,l3] = getAnimations(player.texture, map);
+const enemyArrows$ = flyd
+  .scan(inc, 0, every(5000))
+  .map(count => (count % 2 === 0 ? vec(-20, 0) : vec(20, 0)));
 
-    if (any(equals(player.dir.x), [r1,r2,r3])) {
-      return r1
-    }
-    return currentTexture
+const enemyMoving$ = zip(initialEnemies.map(initialEnemy => flyd.scan(
+  (enemy, [timeDelta, speed, interval]) => {
+    const newPlayer = nextPosition(enemy, timeDelta, speed);
+    const adjustedPlayer = adjustPlayer(newPlayer, terrains.map(t => t.box));
+    return {
+      ...adjustedPlayer,
+      texture: nextEnemyTexture(
+        getAnimationState(adjustedPlayer.dir, adjustedPlayer.speed),
+        interval
+      )
+    };
   },
-  player.texture,
-  flyd.combine((_, player) => player(), [every(120), moving$])
-);
+  initialEnemy,
+  withLatestFrom([enemyArrows$, animationInterval$], updating$) as flyd.Stream<
+    [number, Vector, number]
+  >
+)));
 
-flyd.on(player => {
+flyd.on(([player, enemies]) => {
   ctx.font = "10px Arial";
   ctx.fillStyle = "#abd5fc";
   ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
   const center = new Vector(canvas.width / 2, canvas.height * 2 / 3);
-  [player, ...terrains].forEach(({ box: { pos, w, h }, texture, id }) => {
-    const x = pos.x + center.x - player.box.pos.x;
-    const y = pos.y + center.y - player.box.pos.y;
-    ctx.fillStyle = "#fff";
-    const coord = getCoordsFromList(texture, 16);
-    if (texture > 0) {
-      ctx.drawImage(img, coord.x * 20, coord.y * 20, 20, 20, x, y, w, h);
-    } else {
-      ctx.fillRect(x, y, w, h);
+  [player, ...enemies, ...terrains].forEach(
+    ({ box: { pos, w, h }, texture, id }) => {
+      const x = pos.x + center.x - player.box.pos.x;
+      const y = pos.y + center.y - player.box.pos.y;
+      ctx.fillStyle = "#fff";
+      const coord = getCoordsFromList(texture, 16);
+      if (texture > 0) {
+        ctx.drawImage(img, coord.x * 20, coord.y * 20, 20, 20, x, y, w, h);
+      } else {
+        ctx.fillRect(x, y, w, h);
+      }
     }
-  });
-}, moving$);
+  );
+}, zip([playerMoving$, enemyMoving$]) as flyd.Stream<[Player, Enemy[]]>);
