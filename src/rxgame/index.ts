@@ -16,6 +16,7 @@ import { contains, apply, any, equals, indexOf, curryN, inc } from "ramda";
 import { collideN, onGround, adjustPlayer } from "./collide";
 import { vec, sign, next, isVectorsEq } from "./utils";
 import { nextTexture, getAnimationState } from "./animations";
+import { arrows$ } from './arrows';
 const map: MyMap = require("../../maps/map.json");
 
 const mapsBoxes = getBoxes(map);
@@ -24,6 +25,10 @@ const initedMap = mapsBoxes.map(apply(fromEntity));
 
 const playerEntity = initedMap.find(entity => entity.texture === 160);
 const enemyEntities = initedMap.filter(entity => entity.texture === 230);
+const portalEntities = initedMap.filter(entity => entity.texture === 116);
+const terrains = initedMap.filter(entity =>
+  contains(entity.texture, [104, 30, 46])
+);
 
 export type Creature = Entity & {
   speed: Vector;
@@ -46,16 +51,8 @@ const initialEnemies = enemyEntities.map(enemy => ({
   dir: vec(1, 0)
 } as Enemy));
 
-const terrains = initedMap.filter(entity =>
-  contains(entity.texture, [104, 30, 46])
-);
 
-const keydown = flyd.stream<KeyboardEvent>();
-const keyup = flyd.stream<KeyboardEvent>();
 const G = 9.8;
-
-window.addEventListener("keydown", keydown);
-window.addEventListener("keyup", keyup);
 
 const img = document.getElementById("img") as HTMLImageElement;
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
@@ -72,37 +69,6 @@ const update = time => {
 };
 
 update(_spendTime);
-
-const arrows$ = flyd.scan(
-  (speed, { type, code }) => {
-    const { x: vx, y: vy } = speed;
-    if (type === "keydown") {
-      switch (code) {
-        case "ArrowLeft":
-          return vec(-200, 0);
-        case "ArrowRight":
-          return vec(200, 0);
-        case "ArrowUp":
-          return vec(vx, -300);
-        default:
-          return speed;
-      }
-    } else {
-      switch (code) {
-        case "ArrowLeft":
-          return vec(vx > 0 ? vx : 0, 0);
-        case "ArrowRight":
-          return vec(vx < 0 ? vx : 0, 0);
-        case "ArrowUp":
-          return vec(vx, 0);
-        default:
-          return speed;
-      }
-    }
-  },
-  vec(0, 0),
-  flyd.merge(keydown, keyup)
-);
 
 const animationInterval$ = flyd.scan(inc, 0, every(120));
 
@@ -176,14 +142,14 @@ flyd.on(([player, enemies]) => {
   ctx.fillStyle = "#abd5fc";
   ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
   const center = new Vector(canvas.width / 2, canvas.height * 2 / 3);
-  [player, ...enemies, ...terrains].forEach(
+  [player, ...enemies, ...terrains, ...portalEntities].forEach(
     ({ box: { pos, w, h }, texture, id }) => {
       const x = pos.x + center.x - player.box.pos.x;
       const y = pos.y + center.y - player.box.pos.y;
       ctx.fillStyle = "#fff";
       const coord = getCoordsFromList(texture, 16);
       if (texture > 0) {
-        ctx.drawImage(img, coord.x * 20, coord.y * 20, 20, 20, x, y, w, h);
+        ctx.drawImage(img, coord.x * 20, coord.y * 20 + 1, 20, 20, x, y, w, h);
       } else {
         ctx.fillRect(x, y, w, h);
       }
