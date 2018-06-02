@@ -1,3 +1,4 @@
+import * as flyd from 'flyd';
 import { Vector } from "sat";
 import { indexOf } from "ramda";
 

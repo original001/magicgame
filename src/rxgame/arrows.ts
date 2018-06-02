@@ -1,5 +1,6 @@
 import * as flyd from 'flyd'
 import { vec } from './utils';
+import filter from "flyd/module/filter";
 
 const keydown = flyd.stream<KeyboardEvent>();
 const keyup = flyd.stream<KeyboardEvent>();
@@ -37,3 +38,5 @@ export const arrows$ = flyd.scan(
   vec(0, 0),
   flyd.merge(keydown, keyup)
 );
+
+export const fireKeys$ = filter((e) => e.code === 'KeyF', keydown)
