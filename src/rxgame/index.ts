@@ -29,14 +29,21 @@ const initedMap = mapsBoxes.map(apply(fromEntity));
 
 const playerEntity = initedMap.find(entity => entity.texture === 160);
 const enemyEntities = initedMap.filter(entity => entity.texture === 230);
-const portalEntities = initedMap.filter(entity => entity.texture === 116);
 
 export const terrains = initedMap.filter(entity =>
   contains(entity.texture, [104, 30, 46])
 );
+export const portalEntities = initedMap.filter(entity =>
+  contains(entity.texture, [0,1,2,3])
+);
 
 const portals: Portal[] = portalEntities.map((portal, ind, arr) => ({
   ...portal,
+  box: new Box(
+    portal.box.pos.add(vec(0, 10)),
+    20,
+    10
+  ),
   target: nextByIndex(arr, ind).box.pos.clone()
 }));
 
@@ -152,24 +159,6 @@ const enemyMoving$ = flyd.map(
             interval
           )
         } as Enemy;
-      })
-      .map(enemy => {
-        const activePortal = portals.find(
-          portal => collide(portal.box, enemy.box).isCollided
-        );
-
-        if (!activePortal) return enemy;
-
-        const newPlayer = {
-          ...enemy,
-          box: new Box(
-            activePortal.target.clone().add(vec(0, -20)),
-            enemy.box.w,
-            enemy.box.h
-          ),
-          speed: vec(enemy.speed.x, -300)
-        } as Player;
-        return newPlayer;
       }),
   withLatestFrom([enemies$, AI$, animationInterval$], updating$) as flyd.Stream<
     [number, Enemy[], Vector, number]
@@ -214,7 +203,7 @@ flyd.on(([player = initialPlayer, enemies = initialEnemies, line]) => {
   ctx.fillStyle = "#abd5fc";
   ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
   const center = new Vector(canvas.width / 2, canvas.height * 2 / 3);
-  [player, ...enemies, ...terrains, ...portalEntities].forEach(
+  [player, ...enemies, ...terrains, ...portals].forEach(
     ({ box: { pos, w, h }, texture, id }) => {
       const x = pos.x + center.x - player.box.pos.x;
       const y = pos.y + center.y - player.box.pos.y;
@@ -233,12 +222,12 @@ flyd.on(([player = initialPlayer, enemies = initialEnemies, line]) => {
     ctx.beginPath();
     const [from, to] = line;
     ctx.moveTo(
-      from.x + center.x - player.box.pos.x,
-      from.y + center.y - player.box.pos.y
+      from.x + center.x - player.box.pos.x + 10,
+      from.y + center.y - player.box.pos.y + 10
     );
     ctx.lineTo(
-      to.x + center.x - player.box.pos.x,
-      to.y + center.y - player.box.pos.y
+      to.x + center.x - player.box.pos.x + 10,
+      to.y + center.y - player.box.pos.y + 10
     );
     ctx.stroke();
   }
