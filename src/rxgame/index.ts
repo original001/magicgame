@@ -14,18 +14,9 @@ import { MyMap } from "../../maps/map";
 import { getBoxes, getCoordsFromList, getAnimations } from "./parseData";
 import { fromEntity, Entity } from "./fabric";
 import { fromTexture } from "../newgame/fabric";
-import {
-  contains,
-  apply,
-  any,
-  equals,
-  indexOf,
-  curryN,
-  inc,
-  update
-} from "ramda";
-import { collideN, onGround, adjustPlayer } from "./collide";
-import { vec, sign, next, isVectorsEq, abs } from "./utils";
+import { contains, apply, inc, update } from "ramda";
+import { collideN, onGround, adjustPlayer, collide } from "./collide";
+import { vec, sign, next, isVectorsEq, abs, nextByIndex } from "./utils";
 import { nextTexture, getAnimationState } from "./animations";
 import { arrows$, fireKeys$ } from "./arrows";
 import { lazyZip, resetAfter } from "./streamUtils";
@@ -43,6 +34,17 @@ const portalEntities = initedMap.filter(entity => entity.texture === 116);
 export const terrains = initedMap.filter(entity =>
   contains(entity.texture, [104, 30, 46])
 );
+
+const portals: Portal[] = portalEntities.map((portal, ind, arr) => ({
+  ...portal,
+  target: nextByIndex(arr, ind).box.pos.clone()
+}));
+
+type Target = {
+  target: Vector;
+};
+
+type Portal = Target & Entity;
 
 export type Creature = Entity & {
   speed: Vector;
@@ -93,32 +95,51 @@ const animationInterval$ = flyd.scan(inc, 0, every(120));
 const nextPlayerTexture = nextTexture(getAnimations(160, map));
 const nextEnemyTexture = nextTexture(getAnimations(230, map));
 
-const playerMoving$ = flyd.map(
-  ([timeDelta, player, speed, interval]): Player => {
-    const newPlayer = moveCreature(player, timeDelta, speed);
-    const adjustedPlayer = adjustPlayer(newPlayer, terrains.map(t => t.box));
-    return {
-      ...adjustedPlayer,
-      texture: nextPlayerTexture(
-        getAnimationState(adjustedPlayer.dir, adjustedPlayer.speed),
-        interval
-      )
-    };
-  },
-  withLatestFrom(
-    [player$, arrows$, animationInterval$],
-    updating$
-  ) as flyd.Stream<[number, Player, Vector, number]>
-);
+const playerMoving$ = flyd
+  .map(
+    ([timeDelta, player, speed, interval]): Player => {
+      const newPlayer = moveCreature(player, timeDelta, speed);
+      const adjustedPlayer = adjustPlayer(newPlayer, terrains.map(t => t.box));
+      return {
+        ...adjustedPlayer,
+        texture: nextPlayerTexture(
+          getAnimationState(adjustedPlayer.dir, adjustedPlayer.speed),
+          interval
+        )
+      };
+    },
+    withLatestFrom(
+      [player$, arrows$, animationInterval$],
+      updating$
+    ) as flyd.Stream<[number, Player, Vector, number]>
+  )
+  .map(player => {
+    const activePortal = portals.find(
+      portal => collide(portal.box, player.box).isCollided
+    );
+
+    if (!activePortal) return player;
+
+    const newPlayer = {
+      ...player,
+      box: new Box(
+        activePortal.target.clone().add(vec(0, -20)),
+        player.box.w,
+        player.box.h
+      ),
+      speed: vec(player.speed.x, -300)
+    } as Player;
+    return newPlayer;
+  });
 
 const AI$ = flyd
   .scan(inc, 0, every(5000))
   .map(count => (count % 2 === 0 ? vec(-20, 0) : vec(20, 0)));
 
-const enemyMoving$ =
-  flyd.map(
-    ([timeDelta, enemies, speed, interval]) =>
-      enemies.map(enemy => {
+const enemyMoving$ = flyd.map(
+  ([timeDelta, enemies, speed, interval]) =>
+    enemies
+      .map(enemy => {
         const newPlayer = moveCreature(enemy, timeDelta, speed);
         const adjustedPlayer = adjustPlayer(
           newPlayer,
@@ -131,12 +152,29 @@ const enemyMoving$ =
             interval
           )
         } as Enemy;
+      })
+      .map(enemy => {
+        const activePortal = portals.find(
+          portal => collide(portal.box, enemy.box).isCollided
+        );
+
+        if (!activePortal) return enemy;
+
+        const newPlayer = {
+          ...enemy,
+          box: new Box(
+            activePortal.target.clone().add(vec(0, -20)),
+            enemy.box.w,
+            enemy.box.h
+          ),
+          speed: vec(enemy.speed.x, -300)
+        } as Player;
+        return newPlayer;
       }),
-    withLatestFrom(
-      [enemies$, AI$, animationInterval$],
-      updating$
-    ) as flyd.Stream<[number, Enemy[], Vector, number]>
-  )
+  withLatestFrom([enemies$, AI$, animationInterval$], updating$) as flyd.Stream<
+    [number, Enemy[], Vector, number]
+  >
+);
 
 const line$ = (withLatestFrom(
   [playerMoving$, enemyMoving$],
@@ -207,4 +245,4 @@ flyd.on(([player = initialPlayer, enemies = initialEnemies, line]) => {
   player$(player);
   enemies$(enemies);
   // }, flyd.combine((player, enemies, line) => [player(), enemies(), line()], [tplayer$, enemyMoving$, line$]));
-}, flyd.immediate(lazyZip(playerMoving$, enemyMoving$, resetAfter(200, line$))));
+}, flyd.immediate(lazyZip(playerMoving$, enemyMoving$, resetAfter(100, line$))));

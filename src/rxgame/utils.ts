@@ -19,4 +19,11 @@ export const next = <T>(ar: T[], el: T) => {
   return ar[ind + 1];
 };
 
+export const nextByIndex = <T>(ar: T[], ind: number) => {
+  if (ind >= ar.length - 1 || ind === -1) {
+    return ar[0];
+  }
+  return ar[ind + 1];
+};
+
 export const nextByMod = <T>(ar: T[], ind: number): T => ar[ind % ar.length];
