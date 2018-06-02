@@ -8,16 +8,28 @@ import inlast from "flyd/module/inlast";
 import { Vector, Box, Response, testPolygonPolygon } from "sat";
 import withLatestFrom from "flyd-withlatestfrom";
 import buffer from "flyd-buffercount";
+import once from "flyd-once";
 import zip from "flyd-zip";
 import { MyMap } from "../../maps/map";
 import { getBoxes, getCoordsFromList, getAnimations } from "./parseData";
 import { fromEntity, Entity } from "./fabric";
 import { fromTexture } from "../newgame/fabric";
-import { contains, apply, any, equals, indexOf, curryN, inc } from "ramda";
+import {
+  contains,
+  apply,
+  any,
+  equals,
+  indexOf,
+  curryN,
+  inc,
+  update
+} from "ramda";
 import { collideN, onGround, adjustPlayer } from "./collide";
 import { vec, sign, next, isVectorsEq, abs } from "./utils";
 import { nextTexture, getAnimationState } from "./animations";
 import { arrows$, fireKeys$ } from "./arrows";
+import { lazyZip, resetAfter } from "./streamUtils";
+import { moveCreature } from "./phisics";
 const map: MyMap = require("../../maps/map.json");
 
 const mapsBoxes = getBoxes(map);
@@ -27,7 +39,8 @@ const initedMap = mapsBoxes.map(apply(fromEntity));
 const playerEntity = initedMap.find(entity => entity.texture === 160);
 const enemyEntities = initedMap.filter(entity => entity.texture === 230);
 const portalEntities = initedMap.filter(entity => entity.texture === 116);
-const terrains = initedMap.filter(entity =>
+
+export const terrains = initedMap.filter(entity =>
   contains(entity.texture, [104, 30, 46])
 );
 
@@ -46,6 +59,8 @@ const initialPlayer: Player = {
   dir: vec(1, 0)
 };
 
+const player$ = flyd.stream(initialPlayer);
+
 const initialEnemies = enemyEntities.map(
   enemy =>
     ({
@@ -55,7 +70,7 @@ const initialEnemies = enemyEntities.map(
     } as Enemy)
 );
 
-const G = 9.8;
+const enemies$ = flyd.stream(initialEnemies);
 
 const img = document.getElementById("img") as HTMLImageElement;
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
@@ -64,45 +79,23 @@ const ctx = canvas.getContext("2d");
 const updating$ = flyd.stream<number>();
 
 let _spendTime = 0;
-const update = time => {
+const timer = time => {
   const tick = (time - _spendTime) / 1000;
   _spendTime = time;
   updating$(tick);
-  requestAnimationFrame(update);
+  requestAnimationFrame(timer);
 };
 
-update(_spendTime);
+timer(_spendTime);
 
 const animationInterval$ = flyd.scan(inc, 0, every(120));
 
 const nextPlayerTexture = nextTexture(getAnimations(160, map));
 const nextEnemyTexture = nextTexture(getAnimations(230, map));
 
-const nextPosition = (
-  creature: Creature,
-  timeDelta,
-  { x: speedX, y: speedY }
-): Creature => {
-  const { speed, box } = creature;
-  const { x, y } = box.pos;
-  const isOnGround = onGround(creature.box, terrains.map(t => t.box));
-  const newSpeedX = speedX;
-  const newSpeedY = isOnGround ? speedY : speed.y + G;
-  const newCreature = {
-    ...creature,
-    box: new Box(
-      new Vector(x + newSpeedX * timeDelta, y + newSpeedY * timeDelta),
-      box.w,
-      box.h
-    ),
-    speed: new Vector(newSpeedX, newSpeedY)
-  };
-  return newCreature;
-};
-
-const playerMoving$ = flyd.scan(
-  (player, [timeDelta, speed, interval]) => {
-    const newPlayer = nextPosition(player, timeDelta, speed);
+const playerMoving$ = flyd.map(
+  ([timeDelta, player, speed, interval]): Player => {
+    const newPlayer = moveCreature(player, timeDelta, speed);
     const adjustedPlayer = adjustPlayer(newPlayer, terrains.map(t => t.box));
     return {
       ...adjustedPlayer,
@@ -112,21 +105,21 @@ const playerMoving$ = flyd.scan(
       )
     };
   },
-  initialPlayer,
-  withLatestFrom([arrows$, animationInterval$], updating$) as flyd.Stream<
-    [number, Vector, number]
-  >
+  withLatestFrom(
+    [player$, arrows$, animationInterval$],
+    updating$
+  ) as flyd.Stream<[number, Player, Vector, number]>
 );
 
-const enemyArrows$ = flyd
+const AI$ = flyd
   .scan(inc, 0, every(5000))
   .map(count => (count % 2 === 0 ? vec(-20, 0) : vec(20, 0)));
 
-const enemyMoving$ = zip(
-  initialEnemies.map(initialEnemy =>
-    flyd.scan(
-      (enemy, [timeDelta, speed, interval]) => {
-        const newPlayer = nextPosition(enemy, timeDelta, speed);
+const enemyMoving$ =
+  flyd.map(
+    ([timeDelta, enemies, speed, interval]) =>
+      enemies.map(enemy => {
+        const newPlayer = moveCreature(enemy, timeDelta, speed);
         const adjustedPlayer = adjustPlayer(
           newPlayer,
           terrains.map(t => t.box)
@@ -137,45 +130,46 @@ const enemyMoving$ = zip(
             getAnimationState(adjustedPlayer.dir, adjustedPlayer.speed),
             interval
           )
-        };
-      },
-      initialEnemy,
-      withLatestFrom(
-        [enemyArrows$, animationInterval$],
-        updating$
-      ) as flyd.Stream<[number, Vector, number]>
-    )
+        } as Enemy;
+      }),
+    withLatestFrom(
+      [enemies$, AI$, animationInterval$],
+      updating$
+    ) as flyd.Stream<[number, Enemy[], Vector, number]>
   )
-);
 
 const line$ = (withLatestFrom(
   [playerMoving$, enemyMoving$],
   fireKeys$
 ) as flyd.Stream<[KeyboardEvent, Player, Enemy[]]>).map(
   ([e, player, enemies]) => {
-    const foundEnemy = enemies.find(
-      enemy => abs(enemy.box.pos.y - player.box.pos.y) < 10 &&
+    const foundEnemyIndex = enemies.findIndex(
+      enemy =>
+        abs(enemy.box.pos.y - player.box.pos.y) < 10 &&
         (enemy.box.pos.x - player.box.pos.x) * player.dir.x > 0
     );
-
+    const foundEnemy = enemies[foundEnemyIndex];
     if (foundEnemy) {
-      const line = [
-        player.box.pos.clone().add(vec(10, 10)),
-        foundEnemy.box.pos.clone().add(vec(10, 10))
-      ] as [Vector, Vector];
-      return line;
+      const from = player.box.pos.clone();
+      const to = foundEnemy.box.pos.clone();
+
+      const newPlayer = {
+        ...player,
+        box: new Box(to.clone(), player.box.w, player.box.h)
+      };
+
+      const newEnemy = {
+        ...foundEnemy,
+        box: new Box(from.clone(), foundEnemy.box.w, foundEnemy.box.h)
+      };
+
+      playerMoving$(newPlayer);
+      enemyMoving$(update(foundEnemyIndex, newEnemy, enemies));
+
+      return [from, to] as [Vector, Vector];
     }
   }
 );
-
-let timeout;
-const debouncedLine$ = flyd.combine((line, self) => {
-  if (line.hasVal) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => self(undefined), 200)
-  }
-  return line()
-}, [line$]) as flyd.Stream<[Vector, Vector]>
 
 flyd.on(([player = initialPlayer, enemies = initialEnemies, line]) => {
   ctx.font = "10px Arial";
@@ -210,4 +204,7 @@ flyd.on(([player = initialPlayer, enemies = initialEnemies, line]) => {
     );
     ctx.stroke();
   }
-}, flyd.immediate(flyd.combine((player, enemies, line) => [player(), enemies(), line()], [playerMoving$, enemyMoving$, debouncedLine$]) as flyd.Stream<[Player, Enemy[], [Vector, Vector]]>));
+  player$(player);
+  enemies$(enemies);
+  // }, flyd.combine((player, enemies, line) => [player(), enemies(), line()], [tplayer$, enemyMoving$, line$]));
+}, flyd.immediate(lazyZip(playerMoving$, enemyMoving$, resetAfter(200, line$))));

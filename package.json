@@ -17,6 +17,7 @@
     "flyd": "^0.2.6",
     "flyd-buffercount": "^0.1.0",
     "flyd-keyboard": "^1.1.0",
+    "flyd-once": "0.0.2",
     "flyd-withlatestfrom": "^0.1.0",
     "flyd-zip": "0.0.1",
     "lodash": "^4.17.4",
