@@ -1,28 +1,43 @@
 import * as flyd from "flyd";
 import every from "flyd/module/every";
-import lift from "flyd/module/lift";
-import filter from "flyd/module/filter";
-import scanmerge from "flyd/module/scanmerge";
-import mergeall from "flyd/module/mergeall";
-import inlast from "flyd/module/inlast";
-import { Vector, Box, Response, testPolygonPolygon } from "sat";
+import { Vector, Box } from "sat";
 import withLatestFrom from "flyd-withlatestfrom";
-import buffer from "flyd-buffercount";
-import once from "flyd-once";
-import zip from "flyd-zip";
 import { getBoxes, getCoordsFromList, getAnimations } from "./parseData";
 import { fromEntity, Entity } from "./fabric";
 import { contains, apply, inc, update } from "ramda";
-import { collideN, onGround, adjustPlayer, collide } from "./collide";
-import { vec, sign, next, isVectorsEq, abs, nextByIndex } from "./utils";
+import { adjustPlayer, collide } from "./collide";
+import { vec, abs, nextByIndex } from "./utils";
 import { nextTexture, getAnimationState } from "./animations";
 import { arrows$, fireKeys$ } from "./arrows";
 import { lazyZip, resetAfter } from "./streamUtils";
 import { moveCreature } from "./phisics";
 import { MyMap } from "../maps/map";
-const map: MyMap = require("../maps/map.json");
+const map: MyMap = require('../maps/map.json')
+const level2: MyMap = require('../maps/level2.json')
+
+type Target = {
+  target: Vector;
+};
+
+
+type Portal = Target & Entity;
+
+export type Creature = Entity & {
+  speed: Vector;
+  dir: Vector;
+};
+
+export type Player = Creature;
+
+export type Enemy = Creature;
+
+const init = (map: MyMap) => {
+
+}
 
 const mapsBoxes = getBoxes(map);
+const nextPlayerTexture = nextTexture(getAnimations(160, map));
+const nextEnemyTexture = nextTexture(getAnimations(230, map));
 
 const initedMap = mapsBoxes.map(apply(fromEntity));
 
@@ -42,20 +57,6 @@ const portals: Portal[] = portalEntities.map((portal, ind, arr) => ({
   target: nextByIndex(arr, ind).box.pos.clone()
 }));
 
-type Target = {
-  target: Vector;
-};
-
-type Portal = Target & Entity;
-
-export type Creature = Entity & {
-  speed: Vector;
-  dir: Vector;
-};
-
-export type Player = Creature;
-
-export type Enemy = Creature;
 
 const initialPlayer: Player = {
   ...playerEntity,
@@ -82,13 +83,10 @@ const ctx = canvas.getContext("2d");
 
 const clicks$ = flyd.stream<MouseEvent>();
 
-const $menu = document.getElementById("menu");
+const $level2 = document.getElementById('level2')
+const $gameplay = document.getElementById("gameplay");
 
-$menu.addEventListener("click", clicks$);
-
-flyd.on(e => {
-  console.log("clicked on menu");
-}, clicks$);
+$level2.addEventListener("click", clicks$);
 
 const updating$ = flyd.stream<number>();
 
@@ -100,12 +98,14 @@ const timer = time => {
   requestAnimationFrame(timer);
 };
 
-timer(_spendTime);
+
+flyd.on(_ => {
+  $gameplay.style.display = 'none'
+  timer(_spendTime);
+}, clicks$);
 
 const animationInterval$ = flyd.scan(inc, 0, every(120));
 
-const nextPlayerTexture = nextTexture(getAnimations(160, map));
-const nextEnemyTexture = nextTexture(getAnimations(230, map));
 
 const playerMoving$ = withLatestFrom(
   [player$, arrows$, animationInterval$],
@@ -162,8 +162,9 @@ const enemyMoving$ = withLatestFrom(
   })
 );
 
+
 const line$ = withLatestFrom([playerMoving$, enemyMoving$], fireKeys$).map(
-  ([e, player, enemies]) => {
+  ([_, player, enemies]) => {
     const foundEnemyIndex = enemies.findIndex(
       enemy =>
         abs(enemy.box.pos.y - player.box.pos.y) < 10 &&
@@ -198,7 +199,7 @@ flyd.on(([player = initialPlayer, enemies = initialEnemies, line]) => {
   ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
   const center = new Vector(canvas.width / 2, canvas.height * 2 / 3);
   [player, ...enemies, ...terrains, ...portals].forEach(
-    ({ box: { pos, w, h }, texture, id }) => {
+    ({ box: { pos, w, h }, texture }) => {
       const x = pos.x + center.x - player.box.pos.x;
       const y = pos.y + center.y - player.box.pos.y;
       ctx.fillStyle = "#fff";

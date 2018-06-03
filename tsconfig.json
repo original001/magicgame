@@ -1,7 +1,14 @@
 {
   "compilerOptions": {
-    "target": "es6",
-    "moduleResolution": "node"
+    "target": "es5",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "lib": [
+      "ES5",
+      "ES6",
+      "DOM"
+    ]
   },
   "include": [
     "__tests__",
