@@ -1,4 +1,4 @@
-import { next , nextByMod } from '../src/rxgame/utils';
+import { next , nextByMod } from '../src//utils';
 
 describe("next", () => {
   it("after first will second", () => {

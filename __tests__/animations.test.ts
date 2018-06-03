@@ -1,5 +1,5 @@
-import { nextTexture } from "../src/rxgame/animations";
-import { vec } from '../src/rxgame/utils';
+import { nextTexture } from "../src//animations";
+import { vec } from '../src//utils';
 
 const nextTestTexture = nextTexture([1,2,3,7,8,9])
 

@@ -1,13 +1,13 @@
 import { Box, Vector, testPolygonPolygon, Response } from "sat";
-import { Entity } from "../src/rxgame/fabric";
+import { Entity } from "../src//fabric";
 import {
   collideN,
   onGround,
   collide,
   sumOverlap,
   adjustPlayer
-} from "../src/rxgame/collide";
-import { Player } from "../src/rxgame/index";
+} from "../src//collide";
+import { Player } from "../src//index";
 
 const blockMarkup = {
   id: 1,

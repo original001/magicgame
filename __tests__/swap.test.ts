@@ -1,4 +1,4 @@
-import { swap , swapN } from "../src/rxgame/swap";
+import { swap , swapN } from "../src//swap";
 import { Box, Vector } from "sat";
 
 describe("swap", () => {

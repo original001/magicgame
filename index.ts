@@ -1,1 +1,1 @@
-import './src/rxgame';
+import './src';

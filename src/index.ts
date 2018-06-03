@@ -10,10 +10,8 @@ import withLatestFrom from "flyd-withlatestfrom";
 import buffer from "flyd-buffercount";
 import once from "flyd-once";
 import zip from "flyd-zip";
-import { MyMap } from "../../maps/map";
 import { getBoxes, getCoordsFromList, getAnimations } from "./parseData";
 import { fromEntity, Entity } from "./fabric";
-import { fromTexture } from "../newgame/fabric";
 import { contains, apply, inc, update } from "ramda";
 import { collideN, onGround, adjustPlayer, collide } from "./collide";
 import { vec, sign, next, isVectorsEq, abs, nextByIndex } from "./utils";
@@ -21,7 +19,8 @@ import { nextTexture, getAnimationState } from "./animations";
 import { arrows$, fireKeys$ } from "./arrows";
 import { lazyZip, resetAfter } from "./streamUtils";
 import { moveCreature } from "./phisics";
-const map: MyMap = require("../../maps/map.json");
+import { MyMap } from "../maps/map";
+const map: MyMap = require("../maps/map.json");
 
 const mapsBoxes = getBoxes(map);
 

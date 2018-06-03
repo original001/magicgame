@@ -1,5 +1,5 @@
 import * as flyd from 'flyd'
-import {resetAfter} from '../src/rxgame/streamUtils'
+import {resetAfter} from '../src//streamUtils'
 
 jest.useFakeTimers();
 

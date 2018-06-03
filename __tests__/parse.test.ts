@@ -1,6 +1,5 @@
-import { getBoxes, getCoordsFromList } from "../src/rxgame/parseData";
-import { fromModel, fromVector, fromBox } from "../src/newgame/satHelpers";
-import * as SAT from "sat";
+import { getBoxes, getCoordsFromList } from "../src//parseData";
+import { fromModel , fromVector } from '../src/parseData';
 
 describe("parsing map", () => {
   it("getting coord from flat list correctly", () => {
@@ -113,10 +112,10 @@ describe("parsing map", () => {
   it("map parsed correctly", () => {
     const parsedMap = getBoxes(map);
     expect(parsedMap).toEqual([
-      [0, fromBox(20, 0, 20, 20)],
-      [1, fromBox(40, 0, 20, 20)],
-      [0, fromBox(20, 20, 20, 20)],
-      [1, fromBox(40, 20, 20, 20)]
+      [0, fromModel(fromVector(20, 0), 20, 20)],
+      [1, fromModel(fromVector(40, 0), 20, 20)],
+      [0, fromModel(fromVector(20, 20), 20, 20)],
+      [1, fromModel(fromVector(40, 20), 20, 20)]
     ]);
     expect(parsedMap.length).toBe(4);
     const [firstId, firstBox] = parsedMap[0];

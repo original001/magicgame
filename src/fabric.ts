@@ -1,14 +1,14 @@
-import {GroundItem} from './ground';
-import Player from './player';
-import Enemy from './enemy';
-
-export const initObjects = (data, textureId) => {
-  return data.filter(coord => {
-    return coord.hasOwnProperty(textureId)
-  }).map(coord => {
-    return createObjectByTexId(textureId, coord[textureId]);
-  })
+export interface Entity {
+  id: number;
+  texture: number;
+  box: SAT.Box;
 }
+
+export const fromEntity = ((id) => (texture: number, box): Entity => ({
+  id: id++,
+  texture,
+  box,
+}))(0);
 
 export const textureMap = {
   groundItem: 104,
@@ -16,23 +16,4 @@ export const textureMap = {
   grass: 46,
   player: 160,
   enemy: 214
-}
-
-export const createObjectByTexId = (texId, model) => {
-  let obj;
-  switch (texId) {
-    case 104:
-    case 30:
-    case 46:
-      obj = new GroundItem(model);
-      break;
-    case 160:
-      obj = new Player(model);
-      break;
-    case 214:
-      obj = new Enemy(model);
-      break;
-  }
-  obj.textureId = texId;
-  return obj;
-}
+};
