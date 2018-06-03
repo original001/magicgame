@@ -85,6 +85,16 @@ const img = document.getElementById("img") as HTMLImageElement;
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
 
+const clicks$ = flyd.stream<MouseEvent>();
+
+const $menu = document.getElementById('menu')
+
+$menu.addEventListener('click', clicks$)
+
+flyd.on((e) => {
+  console.log('clicked on menu')
+},clicks$)
+
 const updating$ = flyd.stream<number>();
 
 let _spendTime = 0;
@@ -118,7 +128,7 @@ const playerMoving$ = flyd
     withLatestFrom(
       [player$, arrows$, animationInterval$],
       updating$
-    ) as flyd.Stream<[number, Player, Vector, number]>
+    )
   )
   .map(player => {
     const activePortal = portals.find(
@@ -160,15 +170,12 @@ const enemyMoving$ = flyd.map(
           )
         } as Enemy;
       }),
-  withLatestFrom([enemies$, AI$, animationInterval$], updating$) as flyd.Stream<
-    [number, Enemy[], Vector, number]
-  >
-);
+  withLatestFrom([enemies$, AI$, animationInterval$], updating$));
 
 const line$ = (withLatestFrom(
   [playerMoving$, enemyMoving$],
   fireKeys$
-) as flyd.Stream<[KeyboardEvent, Player, Enemy[]]>).map(
+)).map(
   ([e, player, enemies]) => {
     const foundEnemyIndex = enemies.findIndex(
       enemy =>

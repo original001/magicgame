@@ -3,10 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <title>Magic Game</title>
+  <style>
+    body {
+      font: 14px Arial;
+      color: #333;
+    }
+    .root {
+      font-size: 0;
+    }
+    .gameplay {
+      position: relative;
+      width: 500px;
+      height: 500px;
+      top: -500px;
+      font-size: 14px;
+    }
+    .overlay {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #000;
+      opacity: .5;
+    }
+    .menu {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 150px;
+      height: 50px;
+      background: #fff;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: auto;
+      cursor: pointer;
+      user-select: none;
+    }
+    .menu:hover {
+      background: #f1f1f1;
+    }
+    .menu-item {
+      display: inline-block;
+    }
+  </style>
 </head>
 <body>
   <img src="img/terrain.png" id="img" style="display: none">
-  <canvas id="canvas" width="500" height="500"></canvas>
+  <div class="root">
+    <canvas id="canvas" width="500" height="500"></canvas>
+    <div class="gameplay" id="gameplay">
+      <div class="overlay"></div>
+      <div class="menu" id="menu">
+        <div class="menu-item">Начать игру</div>
+      </div>
+    </div>
+  </div>
   <script src="bundle.js"></script>
 </body>
 </html>
