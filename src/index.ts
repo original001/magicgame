@@ -33,16 +33,12 @@ export const terrains = initedMap.filter(entity =>
   contains(entity.texture, [104, 30, 46])
 );
 export const portalEntities = initedMap.filter(entity =>
-  contains(entity.texture, [0,1,2,3])
+  contains(entity.texture, [0, 1, 2, 3])
 );
 
 const portals: Portal[] = portalEntities.map((portal, ind, arr) => ({
   ...portal,
-  box: new Box(
-    portal.box.pos.add(vec(0, 10)),
-    20,
-    10
-  ),
+  box: new Box(portal.box.pos.add(vec(0, 10)), 20, 10),
   target: nextByIndex(arr, ind).box.pos.clone()
 }));
 
@@ -86,13 +82,13 @@ const ctx = canvas.getContext("2d");
 
 const clicks$ = flyd.stream<MouseEvent>();
 
-const $menu = document.getElementById('menu')
+const $menu = document.getElementById("menu");
 
-$menu.addEventListener('click', clicks$)
+$menu.addEventListener("click", clicks$);
 
-flyd.on((e) => {
-  console.log('clicked on menu')
-},clicks$)
+flyd.on(e => {
+  console.log("clicked on menu");
+}, clicks$);
 
 const updating$ = flyd.stream<number>();
 
@@ -111,24 +107,21 @@ const animationInterval$ = flyd.scan(inc, 0, every(120));
 const nextPlayerTexture = nextTexture(getAnimations(160, map));
 const nextEnemyTexture = nextTexture(getAnimations(230, map));
 
-const playerMoving$ = flyd
-  .map(
-    ([timeDelta, player, speed, interval]): Player => {
-      const newPlayer = moveCreature(player, timeDelta, speed);
-      const adjustedPlayer = adjustPlayer(newPlayer, terrains.map(t => t.box));
-      return {
-        ...adjustedPlayer,
-        texture: nextPlayerTexture(
-          getAnimationState(adjustedPlayer.dir, adjustedPlayer.speed),
-          interval
-        )
-      };
-    },
-    withLatestFrom(
-      [player$, arrows$, animationInterval$],
-      updating$
-    )
-  )
+const playerMoving$ = withLatestFrom(
+  [player$, arrows$, animationInterval$],
+  updating$
+)
+  .map(([timeDelta, player, speed, interval]): Player => {
+    const newPlayer = moveCreature(player, timeDelta, speed);
+    const adjustedPlayer = adjustPlayer(newPlayer, terrains.map(t => t.box));
+    return {
+      ...adjustedPlayer,
+      texture: nextPlayerTexture(
+        getAnimationState(adjustedPlayer.dir, adjustedPlayer.speed),
+        interval
+      )
+    };
+  })
   .map(player => {
     const activePortal = portals.find(
       portal => collide(portal.box, player.box).isCollided
@@ -152,29 +145,24 @@ const AI$ = flyd
   .scan(inc, 0, every(5000))
   .map(count => (count % 2 === 0 ? vec(-20, 0) : vec(20, 0)));
 
-const enemyMoving$ = flyd.map(
-  ([timeDelta, enemies, speed, interval]) =>
-    enemies
-      .map(enemy => {
-        const newPlayer = moveCreature(enemy, timeDelta, speed);
-        const adjustedPlayer = adjustPlayer(
-          newPlayer,
-          terrains.map(t => t.box)
-        );
-        return {
-          ...adjustedPlayer,
-          texture: nextEnemyTexture(
-            getAnimationState(adjustedPlayer.dir, adjustedPlayer.speed),
-            interval
-          )
-        } as Enemy;
-      }),
-  withLatestFrom([enemies$, AI$, animationInterval$], updating$));
+const enemyMoving$ = withLatestFrom(
+  [enemies$, AI$, animationInterval$],
+  updating$
+).map(([timeDelta, enemies, speed, interval]) =>
+  enemies.map(enemy => {
+    const newPlayer = moveCreature(enemy, timeDelta, speed);
+    const adjustedPlayer = adjustPlayer(newPlayer, terrains.map(t => t.box));
+    return {
+      ...adjustedPlayer,
+      texture: nextEnemyTexture(
+        getAnimationState(adjustedPlayer.dir, adjustedPlayer.speed),
+        interval
+      )
+    } as Enemy;
+  })
+);
 
-const line$ = (withLatestFrom(
-  [playerMoving$, enemyMoving$],
-  fireKeys$
-)).map(
+const line$ = withLatestFrom([playerMoving$, enemyMoving$], fireKeys$).map(
   ([e, player, enemies]) => {
     const foundEnemyIndex = enemies.findIndex(
       enemy =>
