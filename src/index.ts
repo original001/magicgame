@@ -12,13 +12,12 @@ import { arrows$, fireKeys$ } from "./arrows";
 import { lazyZip, resetAfter } from "./streamUtils";
 import { moveCreature } from "./phisics";
 import { MyMap } from "../maps/map";
-const map: MyMap = require('../maps/map.json')
-const level2: MyMap = require('../maps/level2.json')
+const map: MyMap = require("../maps/map.json");
+const level2: MyMap = require("../maps/level2.json");
 
 type Target = {
   target: Vector;
 };
-
 
 type Portal = Target & Entity;
 
@@ -31,62 +30,73 @@ export type Player = Creature;
 
 export type Enemy = Creature;
 
-const init = (map: MyMap) => {
-
-}
-
-const mapsBoxes = getBoxes(map);
-const nextPlayerTexture = nextTexture(getAnimations(160, map));
-const nextEnemyTexture = nextTexture(getAnimations(230, map));
-
-const initedMap = mapsBoxes.map(apply(fromEntity));
-
-const playerEntity = initedMap.find(entity => entity.texture === 160);
-const enemyEntities = initedMap.filter(entity => entity.texture === 230);
-
-export const terrains = initedMap.filter(entity =>
-  contains(entity.texture, [104, 30, 46])
-);
-export const portalEntities = initedMap.filter(entity =>
-  contains(entity.texture, [0, 1, 2, 3])
-);
-
-const portals: Portal[] = portalEntities.map((portal, ind, arr) => ({
-  ...portal,
-  box: new Box(portal.box.pos.add(vec(0, 10)), 20, 10),
-  target: nextByIndex(arr, ind).box.pos.clone()
-}));
-
-
-const initialPlayer: Player = {
-  ...playerEntity,
-  speed: vec(),
-  dir: vec(1, 0)
-};
-
-const player$ = flyd.stream(initialPlayer);
-
-const initialEnemies = enemyEntities.map(
-  enemy =>
-    ({
-      ...enemy,
-      speed: vec(),
-      dir: vec(1, 0)
-    } as Enemy)
-);
-
-const enemies$ = flyd.stream(initialEnemies);
+export type Terrain = Entity;
 
 const img = document.getElementById("img") as HTMLImageElement;
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
 
-const clicks$ = flyd.stream<MouseEvent>();
+const clicks1$ = flyd.stream<MouseEvent>();
+const clicks2$ = flyd.stream<MouseEvent>();
 
-const $level2 = document.getElementById('level2')
+const $level1 = document.getElementById("level1");
+const $level2 = document.getElementById("level2");
 const $gameplay = document.getElementById("gameplay");
 
-$level2.addEventListener("click", clicks$);
+$level1.addEventListener("click", clicks1$);
+$level2.addEventListener("click", clicks2$);
+
+const nextPlayerTexture = nextTexture(getAnimations(160, map));
+const nextEnemyTexture = nextTexture(getAnimations(230, map));
+
+const player$ = flyd.stream<Player>();
+const enemies$ = flyd.stream<Enemy[]>();
+const terrains$ = flyd.stream<Terrain[]>();
+const portals$ = flyd.stream<Portal[]>();
+
+
+const init = (map: MyMap) => {
+  const mapsBoxes = getBoxes(map);
+
+  const initedMap = mapsBoxes.map(apply(fromEntity));
+
+  const playerEntity = initedMap.find(entity => entity.texture === 160);
+  const enemyEntities = initedMap.filter(entity => entity.texture === 230);
+
+  const terrains = initedMap.filter(entity =>
+    contains(entity.texture, [104, 30, 46])
+  );
+  
+  const portalEntities = initedMap.filter(entity =>
+    contains(entity.texture, [0, 1, 2, 3])
+  );
+
+  const portals: Portal[] = portalEntities.map((portal, ind, arr) => ({
+    ...portal,
+    box: new Box(portal.box.pos.add(vec(0, 10)), 20, 10),
+    target: nextByIndex(arr, ind).box.pos.clone()
+  }));
+
+  const initialPlayer: Player = {
+    ...playerEntity,
+    speed: vec(),
+    dir: vec(1, 0)
+  };
+
+  const initialEnemies = enemyEntities.map(
+    enemy =>
+      ({
+        ...enemy,
+        speed: vec(),
+        dir: vec(1, 0)
+      } as Enemy)
+  );
+
+  player$(initialPlayer);
+  enemies$(initialEnemies)
+  terrains$(terrains)
+  portals$(portals)
+};
 
 const updating$ = flyd.stream<number>();
 
@@ -98,21 +108,26 @@ const timer = time => {
   requestAnimationFrame(timer);
 };
 
+timer(_spendTime);
 
 flyd.on(_ => {
-  $gameplay.style.display = 'none'
-  timer(_spendTime);
-}, clicks$);
+  $gameplay.style.display = "none";
+  init(map)
+}, clicks1$);
+
+flyd.on(_ => {
+  $gameplay.style.display = "none";
+  init(level2)
+}, clicks2$);
 
 const animationInterval$ = flyd.scan(inc, 0, every(120));
 
-
 const playerMoving$ = withLatestFrom(
-  [player$, arrows$, animationInterval$],
+  [player$, arrows$, animationInterval$, terrains$],
   updating$
 )
-  .map(([timeDelta, player, speed, interval]): Player => {
-    const newPlayer = moveCreature(player, timeDelta, speed);
+  .map(([timeDelta, player, speed, interval, terrains]): Player => {
+    const newPlayer = moveCreature(player, timeDelta, speed, terrains);
     const adjustedPlayer = adjustPlayer(newPlayer, terrains.map(t => t.box));
     return {
       ...adjustedPlayer,
@@ -123,7 +138,7 @@ const playerMoving$ = withLatestFrom(
     };
   })
   .map(player => {
-    const activePortal = portals.find(
+    const activePortal = portals$().find(
       portal => collide(portal.box, player.box).isCollided
     );
 
@@ -146,11 +161,11 @@ const AI$ = flyd
   .map(count => (count % 2 === 0 ? vec(-20, 0) : vec(20, 0)));
 
 const enemyMoving$ = withLatestFrom(
-  [enemies$, AI$, animationInterval$],
+  [enemies$, AI$, animationInterval$, terrains$],
   updating$
-).map(([timeDelta, enemies, speed, interval]) =>
+).map(([timeDelta, enemies, speed, interval, terrains]) =>
   enemies.map(enemy => {
-    const newPlayer = moveCreature(enemy, timeDelta, speed);
+    const newPlayer = moveCreature(enemy, timeDelta, speed, terrains);
     const adjustedPlayer = adjustPlayer(newPlayer, terrains.map(t => t.box));
     return {
       ...adjustedPlayer,
@@ -161,7 +176,6 @@ const enemyMoving$ = withLatestFrom(
     } as Enemy;
   })
 );
-
 
 const line$ = withLatestFrom([playerMoving$, enemyMoving$], fireKeys$).map(
   ([_, player, enemies]) => {
@@ -193,12 +207,13 @@ const line$ = withLatestFrom([playerMoving$, enemyMoving$], fireKeys$).map(
   }
 );
 
-flyd.on(([player = initialPlayer, enemies = initialEnemies, line]) => {
+flyd.on(([player, enemies, line]) => {
+  if (!player || !enemies) return
   ctx.font = "10px Arial";
   ctx.fillStyle = "#abd5fc";
   ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
   const center = new Vector(canvas.width / 2, canvas.height * 2 / 3);
-  [player, ...enemies, ...terrains, ...portals].forEach(
+  [player, ...enemies, ...terrains$(), ...portals$()].forEach(
     ({ box: { pos, w, h }, texture }) => {
       const x = pos.x + center.x - player.box.pos.x;
       const y = pos.y + center.y - player.box.pos.y;

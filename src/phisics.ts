@@ -1,4 +1,4 @@
-import {Creature, terrains} from './index'
+import {Creature} from './index'
 import { onGround } from './collide';
 import {Box, Vector} from 'sat'
 
@@ -7,7 +7,8 @@ const G = 9.8;
 export const moveCreature = (
   creature: Creature,
   timeDelta,
-  { x: speedX, y: speedY }
+  { x: speedX, y: speedY },
+  terrains
 ): Creature => {
   const { speed, box } = creature;
   const { x, y } = box.pos;

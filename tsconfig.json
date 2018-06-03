@@ -4,10 +4,12 @@
     "esModuleInterop": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
+    "allowUnusedLabels": true,
+    "diagnostics": false,
     "lib": [
-      "ES5",
-      "ES6",
-      "DOM"
+      "es5",
+      "es6",
+      "dom"
     ]
   },
   "include": [
