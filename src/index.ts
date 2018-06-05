@@ -100,6 +100,9 @@ const init = (map: MyMap) => {
   enemies$(initialEnemies);
   terrains$(terrains);
   portals$(portals);
+  // setTimeout(() => {
+  //   finishS(true);
+  // }, 5000)
 };
 
 const updating$ = flyd.stream<number>();
@@ -122,7 +125,7 @@ flyd.on(_ => {
   init(levels[0])
   maps$(levels[0])
   currentLevel = 0;
-}, flyd.immediate(start$));
+}, start$);
 
 flyd.on(e => {
   if (e.code === 'Escape') {
@@ -136,7 +139,9 @@ flyd.on(_ => {
     $win.style.display = 'block';   
     return;
   }
-  init(nextByIndex(levels, currentLevel))
+  const nextLevel = nextByIndex(levels, currentLevel);
+  init(nextLevel)
+  maps$(nextLevel)
   currentLevel++;
 }, finishS)
 
