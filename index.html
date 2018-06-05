@@ -22,6 +22,7 @@
       height: 500px;
       top: -500px;
       font-size: 14px;
+      user-select: none;
     }
     .overlay {
       position: absolute;
@@ -33,12 +34,10 @@
       opacity: .5;
     }
     .menu {
+      position: absolute;
       width: 150px;
       padding: 10px 0;
       background: #fff;
-      position: absolute;
-      margin: auto;
-      user-select: none;
     }
     .menu-item {
       padding: 10px 0;
@@ -47,6 +46,18 @@
     }
     .menu-item:hover {
       background: #f1f1f1;
+    }
+    .gameover {
+      display: none;
+      font-size: 24px;
+      font-family: monospace;
+      font-weight: 600;
+    }
+    .win {
+      display: none;
+      font-size: 24px;
+      font-family: monospace;
+      font-weight: 600;
     }
   </style>
 </head>
@@ -57,9 +68,10 @@
     <div class="gameplay" id="gameplay">
       <div class="overlay"></div>
       <div class="menu" id="menu">
-        <div class="menu-item" id="level1">level 1</div>
-        <div class="menu-item" id="level2">level 2</div>
+        <div class="menu-item" id="start">Begin</div>
       </div>
+      <div class="gameover" id="gameover">Game over!</div>
+      <div class="win" id="win">You win!</div>
     </div>
   </div>
   <script src="bundle.js"></script>

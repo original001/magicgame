@@ -4,7 +4,7 @@ import { Vector, Box } from "sat";
 import withLatestFrom from "flyd-withlatestfrom";
 import { getBoxes, getCoordsFromList, getAnimations } from "./parseData";
 import { fromEntity, Entity } from "./fabric";
-import { contains, apply, inc, update } from "ramda";
+import { contains, apply, inc, update, remove } from "ramda";
 import { adjustPlayer, collide } from "./collide";
 import { vec, abs, nextByIndex } from "./utils";
 import { nextTexture, getAnimationState } from "./animations";
@@ -36,15 +36,16 @@ const img = document.getElementById("img") as HTMLImageElement;
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
 
-const clicks1$ = flyd.stream<MouseEvent>();
-const clicks2$ = flyd.stream<MouseEvent>();
+const start$ = flyd.stream<MouseEvent>();
+const keyPress$ = flyd.stream<KeyboardEvent>();
 
-const $level1 = document.getElementById("level1");
-const $level2 = document.getElementById("level2");
+const $start = document.getElementById("start");
 const $gameplay = document.getElementById("gameplay");
+const $menu = document.getElementById("menu");
+const $win = document.getElementById("win");
 
-$level1.addEventListener("click", clicks1$);
-$level2.addEventListener("click", clicks2$);
+$start.addEventListener("click", start$);
+window.addEventListener('keydown', keyPress$)
 
 const nextPlayerTexture = nextTexture(getAnimations(160, map));
 const nextEnemyTexture = nextTexture(getAnimations(230, map));
@@ -54,6 +55,9 @@ const enemies$ = flyd.stream<Enemy[]>();
 const terrains$ = flyd.stream<Terrain[]>();
 const portals$ = flyd.stream<Portal[]>();
 const maps$ = flyd.stream<MyMap>();
+const finishS = flyd.stream();
+
+const levels = [map, level2];
 
 const init = (map: MyMap) => {
   const mapsBoxes = getBoxes(map);
@@ -110,21 +114,31 @@ const timer = time => {
 
 timer(_spendTime);
 
-$gameplay.style.display = "none";
-init(map);
-maps$(map);
+let currentLevel;
 
 flyd.on(_ => {
   $gameplay.style.display = "none";
-  init(map);
-  maps$(map);
-}, clicks1$);
+  $menu.style.display = "none";
+  init(levels[0])
+  maps$(levels[0])
+  currentLevel = 0;
+}, flyd.immediate(start$));
+
+flyd.on(e => {
+  if (e.code === 'Escape') {
+    $gameplay.style.display = "flex";
+  }
+}, keyPress$);
 
 flyd.on(_ => {
-  $gameplay.style.display = "none";
-  init(level2);
-  maps$(level2);
-}, clicks2$);
+  if (currentLevel === levels.length - 1) {
+    $gameplay.style.display = "flex";
+    $win.style.display = 'block';   
+    return;
+  }
+  init(nextByIndex(levels, currentLevel))
+  currentLevel++;
+}, finishS)
 
 const animationInterval$ = flyd.scan(inc, 0, every(120));
 
