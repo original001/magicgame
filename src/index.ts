@@ -53,7 +53,7 @@ const player$ = flyd.stream<Player>();
 const enemies$ = flyd.stream<Enemy[]>();
 const terrains$ = flyd.stream<Terrain[]>();
 const portals$ = flyd.stream<Portal[]>();
-
+const maps$ = flyd.stream<MyMap>();
 
 const init = (map: MyMap) => {
   const mapsBoxes = getBoxes(map);
@@ -64,9 +64,9 @@ const init = (map: MyMap) => {
   const enemyEntities = initedMap.filter(entity => entity.texture === 230);
 
   const terrains = initedMap.filter(entity =>
-    contains(entity.texture, [104, 30, 46])
+    contains(entity.texture, [104, 30, 46, 125])
   );
-  
+
   const portalEntities = initedMap.filter(entity =>
     contains(entity.texture, [0, 1, 2, 3])
   );
@@ -93,9 +93,9 @@ const init = (map: MyMap) => {
   );
 
   player$(initialPlayer);
-  enemies$(initialEnemies)
-  terrains$(terrains)
-  portals$(portals)
+  enemies$(initialEnemies);
+  terrains$(terrains);
+  portals$(portals);
 };
 
 const updating$ = flyd.stream<number>();
@@ -110,14 +110,20 @@ const timer = time => {
 
 timer(_spendTime);
 
+$gameplay.style.display = "none";
+init(map);
+maps$(map)
+
 flyd.on(_ => {
   $gameplay.style.display = "none";
-  init(map)
+  init(map);
+  maps$(map)
 }, clicks1$);
 
 flyd.on(_ => {
   $gameplay.style.display = "none";
-  init(level2)
+  init(level2);
+  maps$(level2)
 }, clicks2$);
 
 const animationInterval$ = flyd.scan(inc, 0, every(120));
@@ -126,17 +132,19 @@ const playerMoving$ = withLatestFrom(
   [player$, arrows$, animationInterval$, terrains$],
   updating$
 )
-  .map(([timeDelta, player, speed, interval, terrains]): Player => {
-    const newPlayer = moveCreature(player, timeDelta, speed, terrains);
-    const adjustedPlayer = adjustPlayer(newPlayer, terrains.map(t => t.box));
-    return {
-      ...adjustedPlayer,
-      texture: nextPlayerTexture(
-        getAnimationState(adjustedPlayer.dir, adjustedPlayer.speed),
-        interval
-      )
-    };
-  })
+  .map(
+    ([timeDelta, player, speed, interval, terrains]): Player => {
+      const newPlayer = moveCreature(player, timeDelta, speed, terrains);
+      const adjustedPlayer = adjustPlayer(newPlayer, terrains.map(t => t.box));
+      return {
+        ...adjustedPlayer,
+        texture: nextPlayerTexture(
+          getAnimationState(adjustedPlayer.dir, adjustedPlayer.speed),
+          interval
+        )
+      };
+    }
+  )
   .map(player => {
     const activePortal = portals$().find(
       portal => collide(portal.box, player.box).isCollided
@@ -207,16 +215,26 @@ const line$ = withLatestFrom([playerMoving$, enemyMoving$], fireKeys$).map(
   }
 );
 
-flyd.on(([player, enemies, line]) => {
-  if (!player || !enemies) return
+flyd.on(([player, enemies, line, map]) => {
+  if (!player || !enemies) return;
   ctx.font = "10px Arial";
   ctx.fillStyle = "#abd5fc";
-  ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
-  const center = new Vector(canvas.width / 2, canvas.height * 2 / 3);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const center = new Vector(canvas.width / 2, (canvas.height * 2) / 3);
   [player, ...enemies, ...terrains$(), ...portals$()].forEach(
     ({ box: { pos, w, h }, texture }) => {
-      const x = pos.x + center.x - player.box.pos.x;
-      const y = pos.y + center.y - player.box.pos.y;
+      const x =
+        player.box.pos.x - canvas.width / 2 <= 0
+          ? pos.x
+          : player.box.pos.x + canvas.width / 2 > map.width * map.tilewidth
+            ? canvas.width - (map.width * map.tilewidth - pos.x)
+            : pos.x + canvas.width / 2 - player.box.pos.x;
+      const y =
+        player.box.pos.y - canvas.height / 2 <= 0
+          ? pos.y
+          : player.box.pos.y + canvas.height / 2 > map.height * map.tileheight
+            ? canvas.height - (map.height * map.tileheight - pos.y)
+            : pos.y + canvas.height / 2 - player.box.pos.y;
       ctx.fillStyle = "#fff";
       const coord = getCoordsFromList(texture, 16);
       if (texture > 0) {
@@ -244,4 +262,4 @@ flyd.on(([player, enemies, line]) => {
   player$(player);
   enemies$(enemies);
   // }, flyd.combine((player, enemies, line) => [player(), enemies(), line()], [tplayer$, enemyMoving$, line$]));
-}, flyd.immediate(lazyZip(playerMoving$, enemyMoving$, resetAfter(100, line$))));
+}, flyd.immediate(lazyZip(playerMoving$, enemyMoving$, resetAfter(100, line$), maps$)));

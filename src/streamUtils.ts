@@ -16,9 +16,10 @@ export const resetAfter = <T>(time, s: Stream<T>) => {
   );
 };
 
-export const lazyZip = <S1, S2, S3>(
+export const lazyZip = <S1, S2, S3, S4>(
   s1: Stream<S1>,
   s2: Stream<S2>,
-  s3: Stream<S3>
+  s3: Stream<S3>,
+  s4: Stream<S4>
 ) =>
-  flyd.combine((s1, s2, s3) => [s1(), s2(), s3()] as [S1, S2, S3], [ s1, s2, s3 ]);
+  flyd.combine((s1, s2, s3, s4) => [s1(), s2(), s3(), s4()] as [S1, S2, S3, S4], [ s1, s2, s3, s4 ]);
