@@ -130,6 +130,7 @@ flyd.on(_ => {
 flyd.on(e => {
   if (e.code === 'Escape') {
     $gameplay.style.display = "flex";
+    $menu.style.display = "block";
   }
 }, keyPress$);
 
