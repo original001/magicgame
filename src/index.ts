@@ -112,18 +112,18 @@ timer(_spendTime);
 
 $gameplay.style.display = "none";
 init(map);
-maps$(map)
+maps$(map);
 
 flyd.on(_ => {
   $gameplay.style.display = "none";
   init(map);
-  maps$(map)
+  maps$(map);
 }, clicks1$);
 
 flyd.on(_ => {
   $gameplay.style.display = "none";
   init(level2);
-  maps$(level2)
+  maps$(level2);
 }, clicks2$);
 
 const animationInterval$ = flyd.scan(inc, 0, every(120));
@@ -185,6 +185,35 @@ const enemyMoving$ = withLatestFrom(
   })
 );
 
+const camera$ = flyd.scan(
+  (camera, [player, map]) => {
+    const playerX = player.box.pos.x;
+    const playerY = player.box.pos.y;
+    let x =
+      playerX - canvas.width / 2 <= 0
+        ? 0
+        : playerX + canvas.width / 2 > map.width * map.tilewidth
+          ? canvas.width - map.width * map.tilewidth
+          : canvas.width / 2 - playerX;
+    let y =
+      playerY - canvas.height / 2 <= 0
+        ? 0
+        : playerY + canvas.height / 2 > map.height * map.tileheight
+          ? canvas.height - map.height * map.tileheight
+          : canvas.height / 2 - playerY;
+    
+    const diffX = x - camera.x;
+    const diffY = y - camera.y;
+    if (abs(diffX) > .1 || abs(diffY) > .1) {
+      x -= diffX * 9 / 10
+      y -= diffY * 9 / 10
+    }
+    return vec(x, y);
+  },
+  vec(),
+  withLatestFrom([maps$], playerMoving$)
+);
+
 const line$ = withLatestFrom([playerMoving$, enemyMoving$], fireKeys$).map(
   ([_, player, enemies]) => {
     const foundEnemyIndex = enemies.findIndex(
@@ -215,7 +244,7 @@ const line$ = withLatestFrom([playerMoving$, enemyMoving$], fireKeys$).map(
   }
 );
 
-flyd.on(([player, enemies, line, map]) => {
+flyd.on(([player, enemies, line, camera]) => {
   if (!player || !enemies) return;
   ctx.font = "10px Arial";
   ctx.fillStyle = "#abd5fc";
@@ -223,18 +252,8 @@ flyd.on(([player, enemies, line, map]) => {
   const center = new Vector(canvas.width / 2, (canvas.height * 2) / 3);
   [player, ...enemies, ...terrains$(), ...portals$()].forEach(
     ({ box: { pos, w, h }, texture }) => {
-      const x =
-        player.box.pos.x - canvas.width / 2 <= 0
-          ? pos.x
-          : player.box.pos.x + canvas.width / 2 > map.width * map.tilewidth
-            ? canvas.width - (map.width * map.tilewidth - pos.x)
-            : pos.x + canvas.width / 2 - player.box.pos.x;
-      const y =
-        player.box.pos.y - canvas.height / 2 <= 0
-          ? pos.y
-          : player.box.pos.y + canvas.height / 2 > map.height * map.tileheight
-            ? canvas.height - (map.height * map.tileheight - pos.y)
-            : pos.y + canvas.height / 2 - player.box.pos.y;
+      const x = camera.x + pos.x;
+      const y = camera.y + pos.y;
       ctx.fillStyle = "#fff";
       const coord = getCoordsFromList(texture, 16);
       if (texture > 0) {
@@ -249,17 +268,11 @@ flyd.on(([player, enemies, line, map]) => {
     ctx.fillStyle = "#faa";
     ctx.beginPath();
     const [from, to] = line;
-    ctx.moveTo(
-      from.x + center.x - player.box.pos.x + 10,
-      from.y + center.y - player.box.pos.y + 10
-    );
-    ctx.lineTo(
-      to.x + center.x - player.box.pos.x + 10,
-      to.y + center.y - player.box.pos.y + 10
-    );
+    ctx.moveTo(from.x + camera.x + 10, from.y + camera.y + 10);
+    ctx.lineTo(to.x + camera.x + 10, to.y + camera.y + 10);
     ctx.stroke();
   }
   player$(player);
   enemies$(enemies);
   // }, flyd.combine((player, enemies, line) => [player(), enemies(), line()], [tplayer$, enemyMoving$, line$]));
-}, flyd.immediate(lazyZip(playerMoving$, enemyMoving$, resetAfter(100, line$), maps$)));
+}, flyd.immediate(lazyZip(playerMoving$, enemyMoving$, resetAfter(100, line$), camera$)));
