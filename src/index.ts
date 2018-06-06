@@ -4,7 +4,24 @@ import { Vector, Box } from "sat";
 import withLatestFrom from "flyd-withlatestfrom";
 import { getBoxes, getCoordsFromList, getAnimations } from "./parseData";
 import { fromEntity, Entity } from "./fabric";
-import { contains, apply, inc, update, remove } from "ramda";
+import {
+  contains,
+  apply,
+  inc,
+  update,
+  remove,
+  sortBy,
+  filter,
+  findIndex,
+  compose,
+  pipe,
+  find,
+  identity,
+  equals,
+  lensPath,
+  view,
+  set
+} from "ramda";
 import { adjustPlayer, collide } from "./collide";
 import { vec, abs, nextByIndex } from "./utils";
 import { nextTexture, getAnimationState } from "./animations";
@@ -32,6 +49,14 @@ export type Enemy = Creature;
 
 export type Terrain = Entity;
 
+const eXlens = lensPath(["box", "pos", "x"]);
+const eYlens = lensPath(["box", "pos", "y"]);
+const eX = view(eXlens) as (e: Entity) => number;
+const eY = view(eYlens) as (e: Entity) => number;
+const ePoslens = lensPath(["box", "pos"]);
+const ePos = view(ePoslens) as (e: Entity) => Vector;
+const ePosSet = set(ePoslens);
+
 const img = document.getElementById("img") as HTMLImageElement;
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
@@ -45,7 +70,7 @@ const $menu = document.getElementById("menu");
 const $win = document.getElementById("win");
 
 $start.addEventListener("click", start$);
-window.addEventListener('keydown', keyPress$)
+window.addEventListener("keydown", keyPress$);
 
 const nextPlayerTexture = nextTexture(getAnimations(160, map));
 const nextEnemyTexture = nextTexture(getAnimations(230, map));
@@ -122,13 +147,13 @@ let currentLevel;
 flyd.on(_ => {
   $gameplay.style.display = "none";
   $menu.style.display = "none";
-  init(levels[0])
-  maps$(levels[0])
+  init(levels[0]);
+  maps$(levels[0]);
   currentLevel = 0;
 }, start$);
 
 flyd.on(e => {
-  if (e.code === 'Escape') {
+  if (e.code === "Escape") {
     $gameplay.style.display = "flex";
     $menu.style.display = "block";
   }
@@ -137,14 +162,14 @@ flyd.on(e => {
 flyd.on(_ => {
   if (currentLevel === levels.length - 1) {
     $gameplay.style.display = "flex";
-    $win.style.display = 'block';   
+    $win.style.display = "block";
     return;
   }
   const nextLevel = nextByIndex(levels, currentLevel);
-  init(nextLevel)
-  maps$(nextLevel)
+  init(nextLevel);
+  maps$(nextLevel);
   currentLevel++;
-}, finishS)
+}, finishS);
 
 const animationInterval$ = flyd.scan(inc, 0, every(120));
 
@@ -207,8 +232,8 @@ const enemyMoving$ = withLatestFrom(
 
 const camera$ = flyd.scan(
   (camera, [player, map]) => {
-    const playerX = player.box.pos.x;
-    const playerY = player.box.pos.y;
+    const playerX = eX(player);
+    const playerY = eY(player)
     let x =
       playerX - canvas.width / 2 <= 0
         ? 0
@@ -221,12 +246,12 @@ const camera$ = flyd.scan(
         : playerY + canvas.height / 2 > map.height * map.tileheight
           ? canvas.height - map.height * map.tileheight
           : canvas.height / 2 - playerY;
-    
+
     const diffX = x - camera.x;
     const diffY = y - camera.y;
-    if (abs(diffX) > .1 || abs(diffY) > .1) {
-      x -= diffX * 9 / 10
-      y -= diffY * 9 / 10
+    if (abs(diffX) > 0.1 || abs(diffY) > 0.1) {
+      x -= (diffX * 9) / 10;
+      y -= (diffY * 9) / 10;
     }
     return vec(x, y);
   },
@@ -236,28 +261,23 @@ const camera$ = flyd.scan(
 
 const line$ = withLatestFrom([playerMoving$, enemyMoving$], fireKeys$).map(
   ([_, player, enemies]) => {
-    const foundEnemyIndex = enemies.findIndex(
-      enemy =>
-        abs(enemy.box.pos.y - player.box.pos.y) < 10 &&
-        (enemy.box.pos.x - player.box.pos.x) * player.dir.x > 0
-    );
-    const foundEnemy = enemies[foundEnemyIndex];
+    const _diffX = enemy => eX(enemy) - eX(player);
+    const _diffY = enemy => eY(enemy) - eY(player);
+    const foundEnemy = compose<Enemy[], Enemy[], Enemy[], Enemy>(
+      find(enemy => abs(_diffY(enemy)) < 10),
+      sortBy(enemy => abs(_diffX(enemy))),
+      filter<Enemy>(
+        enemy => _diffX(enemy) * player.dir.x > 0 && abs(_diffX(enemy)) < 400
+      )
+    )(enemies);
+
     if (foundEnemy) {
+      const foundEnemyIndex = findIndex(equals(foundEnemy), enemies);
       const from = player.box.pos.clone();
       const to = foundEnemy.box.pos.clone();
 
-      const newPlayer = {
-        ...player,
-        box: new Box(to.clone(), player.box.w, player.box.h)
-      };
-
-      const newEnemy = {
-        ...foundEnemy,
-        box: new Box(from.clone(), foundEnemy.box.w, foundEnemy.box.h)
-      };
-
-      playerMoving$(newPlayer);
-      enemyMoving$(update(foundEnemyIndex, newEnemy, enemies));
+      playerMoving$(ePosSet(to, player));
+      enemyMoving$(update(foundEnemyIndex, ePosSet(from, foundEnemy), enemies));
 
       return [from, to] as [Vector, Vector];
     }
