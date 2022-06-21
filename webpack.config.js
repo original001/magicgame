@@ -1,7 +1,7 @@
 const webpack = require('webpack');
 
 module.exports = {
-  entry: './index',
+  entry: './towerdefense',
   output: {
     filename: 'bundle.js'
   },

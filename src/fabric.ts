@@ -15,5 +15,6 @@ export const textureMap = {
   ground: 30,
   grass: 46,
   player: 160,
-  enemy: 214
+  enemy: 214,
+  tower: 17,
 };

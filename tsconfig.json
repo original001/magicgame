@@ -15,6 +15,7 @@
   "include": [
     "__tests__",
     "src/",
+    "towerdefense/",
     "maps"
   ]
 }
